@@ -1,10 +1,10 @@
 const STATUTS = {
-  nouveau:       { label: "À contacter",    color: "#667eea" },
-  contacte:      { label: "Contacté",       color: "#f59e0b" },
-  en_discussion: { label: "En discussion",  color: "#29b6f6" },
-  signe:         { label: "Signé",          color: "#4caf50" },
-  refus:         { label: "Refus",          color: "#ef5350" },
-  ghosted:       { label: "Ghosted",        color: "#888"    },
+  nouveau:       { label: "🆕 Nouveau",       color: "#667eea" },
+  contacte:      { label: "📨 Contacté",      color: "#ffeb3b" },
+  en_discussion: { label: "💬 En discussion", color: "#29b6f6" },
+  signe:         { label: "✅ Signé",          color: "#4caf50" },
+  refus:         { label: "❌ Refus",          color: "#ef5350" },
+  ghosted:       { label: "👻 Ghosted",        color: "#888"    },
 };
 
 const NICHES = {
@@ -41,17 +41,20 @@ function getAvatarColor(pseudo) {
   return AVATAR_COLORS[hash];
 }
 
-function setArc(id, pct) {
-  const circ   = 213.6;
-  const offset = circ - (circ * Math.min(pct, 100) / 100);
-  const el     = document.getElementById(id);
-  if (el) el.style.strokeDashoffset = offset;
+function daysSince(dateStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split(/[\/\s:]/);
+  const date  = new Date(parts[2], parts[1] - 1, parts[0]);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.floor((today - date) / (1000 * 60 * 60 * 24));
 }
 
-function renderLead(lead, actionLabel, actionColor) {
+function renderLeadRow(lead, actionLabel, actionColor) {
   const initiales = getInitiales(lead.pseudo);
   const color     = getAvatarColor(lead.pseudo);
   const retard    = getRetard(lead.date_relance);
+  const since     = daysSince(lead.date_contact);
   const statut    = STATUTS[lead.statut] || STATUTS.nouveau;
 
   return `
@@ -61,8 +64,8 @@ function renderLead(lead, actionLabel, actionColor) {
         <div class="lead-name">@${lead.pseudo}</div>
         <div class="lead-tags">
           <span class="lead-tag" style="color:${statut.color}">${statut.label}</span>
-          ${retard ? `<span class="lead-tag retard-tag">⚠️ ${retard}j en retard</span>` : ""}
-          ${lead.date_contact ? `<span class="lead-tag muted">⏱ ${daysSince(lead.date_contact)}j depuis contact</span>` : ""}
+          ${retard ? `<span class="lead-tag" style="color:#ef5350">⚠️ ${retard}j en retard</span>` : ""}
+          ${since !== null ? `<span class="lead-tag muted">⏱ ${since}j depuis contact</span>` : ""}
         </div>
       </div>
       <button
@@ -74,85 +77,75 @@ function renderLead(lead, actionLabel, actionColor) {
   `;
 }
 
-function daysSince(dateStr) {
-  if (!dateStr) return "?";
-  const [d, m, y, h, min] = dateStr.split(/[\/\s:]/).map(Number);
-  const date  = new Date(y, m - 1, d);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.floor((today - date) / (1000 * 60 * 60 * 24));
-}
-
 async function loadDashboard() {
-  const [stats, goalData, relancesData, nouveaux] = await Promise.all([
-    getStats(),
-    getGoal(),
-    getRelances(),
-    getLeads({ statut: "nouveau", limit: 5 }),
+  const [stats, goalData, relancesData] = await Promise.all([
+    getStats(), getGoal(), getRelances()
   ]);
 
   const goal        = goalData.goal || 210;
   const goalParJour = Math.ceil(goal / 7);
   const dms         = stats.dms_today;
-  const pctDms      = Math.round((dms / goalParJour) * 100);
   const reste       = Math.max(goalParJour - dms, 0);
+  const pctJour     = Math.min(Math.round((dms / goalParJour) * 100), 100);
+  const pctWeek     = Math.min(Math.round((stats.contacte / goal) * 100), 100);
   const totalRetard = relancesData.relances.length + relancesData.discussions.length;
 
-  // Cercles
-  document.getElementById("val-dms").textContent      = dms;
-  document.getElementById("val-relances").textContent = stats.relances_today;
-  document.getElementById("goal-par-jour").textContent = goalParJour;
-  document.getElementById("relances-total").textContent = stats.relances_today + stats.discussions_attente;
+  document.getElementById("date").textContent = new Date().toLocaleDateString("fr-FR", {
+    weekday: "long", day: "numeric", month: "long"
+  });
 
-  setTimeout(() => {
-    setArc("arc-dms",      pctDms);
-    setArc("arc-relances", Math.round((stats.relances_today / Math.max(stats.relances_today + stats.discussions_attente, 1)) * 100));
-  }, 100);
+  // Objectif du jour
+  document.getElementById("objectif-day").innerHTML = `
+    <div class="objectif-wrap">
+      <div class="objectif-top">
+        <div>
+          <div class="objectif-title">🎯 Objectif du jour</div>
+          <div class="objectif-sub">${goalParJour} DMs/jour pour atteindre ${goal}/semaine</div>
+        </div>
+        <div class="objectif-counter ${dms >= goalParJour ? 'done' : ''}">${dms}/${goalParJour}</div>
+      </div>
+      <div class="progress" style="margin-top:12px;">
+        <div class="progress-bar" style="width:${pctJour}%"></div>
+      </div>
+      <div class="objectif-footer">
+        ${dms >= goalParJour
+          ? `<span class="objectif-ok">🔥 Objectif du jour atteint !</span>`
+          : `<span class="objectif-reste">⚡ Il te reste <strong>${reste} DMs</strong> aujourd'hui</span>`
+        }
+        <span class="objectif-week">Goal hebdo : <strong>${pctWeek}%</strong></span>
+      </div>
+    </div>
+  `;
 
-  // Série
-  document.getElementById("objectif-serie").textContent = dms >= goalParJour ? "🔥 Objectif atteint !" : `Objectif : ${goalParJour} contacts/jour`;
-
-  // Sous-titre
-  document.getElementById("objectif-sub").textContent = reste > 0
-    ? `⚡ Il te reste ${reste} DMs à envoyer aujourd'hui`
-    : "🔥 Objectif du jour atteint !";
+  // Stats
+  document.getElementById("total").textContent      = stats.total;
+  document.getElementById("signe").textContent      = stats.signe;
+  document.getElementById("discussion").textContent = stats.discussion;
+  document.getElementById("taux").textContent       = stats.taux_reponse + "%";
 
   // Alerte retards
   if (totalRetard > 0) {
     const el = document.getElementById("alerte-retard");
     el.classList.remove("hidden");
-    document.getElementById("alerte-title").textContent = `${totalRetard} lead${totalRetard > 1 ? "s" : ""} refroidissent — relance-les avant de les perdre`;
+    document.getElementById("alerte-title").textContent =
+      `${totalRetard} lead${totalRetard > 1 ? "s" : ""} refroidissent — relance-les avant de les perdre`;
   }
 
-  // À contacter (nouveaux leads)
-  const contacterList = nouveaux.leads;
-  document.getElementById("count-contacter").textContent = stats.nouveau;
-  const listContacter = document.getElementById("list-contacter");
-  if (contacterList.length) {
-    listContacter.innerHTML = contacterList.map(l => renderLead(l, "Contacter →", "#667eea")).join("");
-  } else {
-    listContacter.innerHTML = '<div class="empty-section">Aucun nouveau lead</div>';
-  }
-
-  // Relances à faire
+  // Relances
   document.getElementById("count-relances").textContent = relancesData.relances.length;
-  const listRelances = document.getElementById("list-relances");
-  if (relancesData.relances.length) {
-    listRelances.innerHTML = relancesData.relances.map(l => renderLead(l, "Relancer →", "#f59e0b")).join("");
-  } else {
-    listRelances.innerHTML = '<div class="empty-section">✅ Aucune relance aujourd\'hui</div>';
-  }
+  const listR = document.getElementById("list-relances");
+  listR.innerHTML = relancesData.relances.length
+    ? relancesData.relances.slice(0, 5).map(l => renderLeadRow(l, "Relancer →", "#f59e0b")).join("")
+    : '<div class="empty">✅ Aucune relance aujourd\'hui</div>';
 
-  // En discussion sans réponse
+  // Discussions
   document.getElementById("count-discussion").textContent = relancesData.discussions.length;
-  const listDiscussion = document.getElementById("list-discussion");
-  if (relancesData.discussions.length) {
-    listDiscussion.innerHTML = relancesData.discussions.map(l => renderLead(l, "Suivre →", "#29b6f6")).join("");
-  } else {
-    listDiscussion.innerHTML = '<div class="empty-section">✅ Toutes les discussions sont à jour</div>';
-  }
+  const listD = document.getElementById("list-discussion");
+  listD.innerHTML = relancesData.discussions.length
+    ? relancesData.discussions.slice(0, 5).map(l => renderLeadRow(l, "Suivre →", "#29b6f6")).join("")
+    : '<div class="empty">✅ Toutes les discussions sont à jour</div>';
 
-  // Pipeline simplifié
+  // Pipeline steps
   const steps = [
     { key: "nouveau",       label: "Nouveaux",      count: stats.nouveau    },
     { key: "contacte",      label: "Contactés",     count: stats.contacte   },
@@ -166,9 +159,25 @@ async function loadDashboard() {
     </div>
     ${i < steps.length - 1 ? '<div class="pipeline-arrow">→</div>' : ""}
   `).join("");
+
+  // Par statut
+  document.getElementById("statut-grid").innerHTML = Object.entries(STATUTS).map(([key, val]) => `
+    <div class="statut-item" onclick="window.location='leads.html?statut=${key}'">
+      <div class="statut-dot" style="background:${val.color}"></div>
+      <div class="statut-label">${val.label}</div>
+      <div class="statut-count">${stats[key] || 0}</div>
+    </div>
+  `).join("");
+
+  // Par niche
+  document.getElementById("niche-grid").innerHTML = Object.entries(NICHES).map(([key, label]) => `
+    <div class="niche-item" onclick="window.location='leads.html?niche=${key}'">
+      <div class="niche-label">${label}</div>
+      <div class="niche-count">${stats.par_niche[key] || 0}</div>
+    </div>
+  `).join("");
 }
 
-// Modal
 async function openLead(id) {
   currentId  = id;
   const lead = await getLead(id);
