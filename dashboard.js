@@ -145,132 +145,32 @@ async function loadDashboard() {
     ? relancesData.discussions.slice(0, 5).map(l => renderLeadRow(l, "Suivre →", "#29b6f6")).join("")
     : '<div class="empty">✅ Toutes les discussions sont à jour</div>';
 
-  // Pipeline steps
-  const steps = [
-    { key: "nouveau",       label: "Nouveaux",      count: stats.nouveau    },
-    { key: "contacte",      label: "Contactés",     count: stats.contacte   },
-    { key: "en_discussion", label: "En discussion", count: stats.discussion },
-    { key: "signe",         label: "Signés",        count: stats.signe      },
+  // Funnel — chemin vers la signature
+  const contacte   = stats.contacte   || 0;
+  const discussion = stats.discussion || 0;
+  const signe      = stats.signe      || 0;
+  const base       = contacte || 1;
+
+  const funnelSteps = [
+    { label: "Contacté",      count: contacte,   pct: 100 },
+    { label: "En discussion", count: discussion, pct: Math.round((discussion / base) * 100) },
+    { label: "Signé",         count: signe,      pct: Math.round((signe / base) * 100) },
   ];
-  document.getElementById("pipeline-steps").innerHTML = steps.map((s, i) => `
-    <div class="pipeline-step" onclick="window.location='leads.html?statut=${s.key}'">
-      <div class="pipeline-count">${s.count}</div>
-      <div class="pipeline-label">${s.label}</div>
-    </div>
-    ${i < steps.length - 1 ? '<div class="pipeline-arrow">→</div>' : ""}
-  `).join("");
 
-  // Par statut
-  document.getElementById("statut-grid").innerHTML = Object.entries(STATUTS).map(([key, val]) => `
-    <div class="statut-item" onclick="window.location='leads.html?statut=${key}'">
-      <div class="statut-dot" style="background:${val.color}"></div>
-      <div class="statut-label">${val.label}</div>
-      <div class="statut-count">${stats[key] || 0}</div>
+  document.getElementById("funnel-bars").innerHTML = funnelSteps.map(s => `
+    <div class="funnel-row">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar-bg">
+          <div class="funnel-bar-fill" style="width:${s.pct}%"></div>
+          <span class="funnel-bar-count">${s.count}</span>
+        </div>
+      </div>
+      <div class="funnel-pct">${s.pct}%</div>
     </div>
   `).join("");
 
-  // Par niche
-  document.getElementById("niche-grid").innerHTML = Object.entries(NICHES).map(([key, label]) => `
-    <div class="niche-item" onclick="window.location='leads.html?niche=${key}'">
-      <div class="niche-label">${label}</div>
-      <div class="niche-count">${stats.par_niche[key] || 0}</div>
-    </div>
-  `).join("");
-}
-
-async function openLead(id) {
-  currentId  = id;
-  const lead = await getLead(id);
-  const s    = STATUTS[lead.statut] || STATUTS.nouveau;
-  const retard = getRetard(lead.date_relance);
-
-  document.getElementById("modal-pseudo").textContent = "@" + lead.pseudo;
-  document.getElementById("modal").classList.remove("hidden");
-
-  document.getElementById("modal-body").innerHTML = `
-    <div class="lead-detail">
-      <div class="detail-row">
-        <span class="detail-label">Statut</span>
-        <span style="color:${s.color}">${s.label}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Lien</span>
-        <a href="${lead.lien}" target="_blank" class="link">${lead.lien || "—"}</a>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Abonnés</span>
-        <span>${lead.abonnes || "—"}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Niche</span>
-        <span>${NICHES[lead.niche] || "—"}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Ajouté le</span>
-        <span>${lead.date_ajout || "—"}</span>
-      </div>
-      ${lead.date_contact ? `
-        <div class="detail-row">
-          <span class="detail-label">Contacté le</span>
-          <span>${lead.date_contact}</span>
-        </div>
-      ` : ""}
-      ${lead.date_relance ? `
-        <div class="detail-row">
-          <span class="detail-label">Relance</span>
-          <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
-            ⏰ ${lead.date_relance}
-            ${retard ? `<span class="retard-inline">⚠️ ${retard}j de retard</span>` : ""}
-          </span>
-        </div>
-      ` : ""}
-      ${lead.notes ? `
-        <div class="detail-row notes">
-          <span class="detail-label">Notes</span>
-          <span>${lead.notes}</span>
-        </div>
-      ` : ""}
-    </div>
-
-    <div class="modal-section">
-      <div class="detail-label">Changer le statut</div>
-      <div class="statut-buttons">
-        ${Object.entries(STATUTS).map(([key, val]) => `
-          <button
-            class="btn-statut ${lead.statut === key ? 'active' : ''}"
-            style="--color:${val.color}"
-            onclick="changeStatut('${key}')"
-          >${val.label}</button>
-        `).join("")}
-      </div>
-    </div>
-
-    <div class="modal-section">
-      <div class="detail-label">Ajouter une note</div>
-      <div class="note-input-wrap">
-        <input type="text" id="note-input" placeholder="Ta note..." class="note-input">
-        <button onclick="saveNote()" class="btn-primary">Ajouter</button>
-      </div>
-    </div>
-  `;
-}
-
-async function changeStatut(statut) {
-  await updateLead(currentId, { statut });
-  closeModal();
-  loadDashboard();
-}
-
-async function saveNote() {
-  const note = document.getElementById("note-input").value.trim();
-  if (!note) return;
-  await addNote(currentId, note);
-  openLead(currentId);
-}
-
-function closeModal() {
-  document.getElementById("modal").classList.add("hidden");
-  currentId = null;
-}
-
-loadDashboard();
+  // Insight
+  const taux = stats.taux_reponse || 0;
+  const needed = taux > 0 ? Math.ceil(100 / taux) : "?";
+  document.getElementById("funnel-insight"
