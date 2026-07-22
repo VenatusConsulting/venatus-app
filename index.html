@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venatus CRM</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <div class="nav-logo">💎 Venatus</div>
+    <div class="nav-links">
+      <a href="index.html" class="active">Dashboard</a>
+      <a href="leads.html">Leads</a>
+      <a href="relances.html">Relances</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>Dashboard</h1>
+      <span id="date" class="date"></span>
+    </div>
+
+    <!-- Stats principales -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total leads</div>
+        <div class="stat-value" id="total">—</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Signés</div>
+        <div class="stat-value" id="signe">—</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">En discussion</div>
+        <div class="stat-value" id="discussion">—</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-label">Taux de réponse</div>
+        <div class="stat-value" id="taux">—</div>
+      </div>
+    </div>
+
+    <!-- DMs aujourd'hui -->
+    <div class="card">
+      <div class="card-header">
+        <h2>DMs aujourd'hui</h2>
+        <span id="dms-today-badge" class="badge">—</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-info">
+          <span id="dms-today">0</span>/30
+        </div>
+        <div class="progress">
+          <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alertes -->
+    <div class="grid-2">
+      <div class="card alert-card" onclick="window.location='relances.html'">
+        <div class="alert-icon">⏰</div>
+        <div>
+          <div class="alert-count" id="relances-count">—</div>
+          <div class="alert-label">Relances aujourd'hui</div>
+        </div>
+      </div>
+      <div class="card alert-card" onclick="window.location='relances.html'">
+        <div class="alert-icon">💬</div>
+        <div>
+          <div class="alert-count" id="discussions-count">—</div>
+          <div class="alert-label">Discussions en attente</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Par statut -->
+    <div class="card">
+      <div class="card-header"><h2>Par statut</h2></div>
+      <div class="statut-grid" id="statut-grid"></div>
+    </div>
+
+    <!-- Par niche -->
+    <div class="card">
+      <div class="card-header"><h2>Par niche</h2></div>
+      <div class="niche-grid" id="niche-grid"></div>
+    </div>
+  </main>
+
+  <script src="api.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
