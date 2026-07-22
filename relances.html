@@ -13,6 +13,7 @@
       <a href="index.html">Dashboard</a>
       <a href="leads.html">Leads</a>
       <a href="relances.html" class="active">Relances</a>
+      <a href="pipeline.html">Pipeline</a>
     </div>
   </nav>
 
@@ -22,25 +23,21 @@
     </div>
 
     <div class="grid-2">
-      <!-- Relances -->
       <div>
         <div class="section-title">⏰ À relancer <span id="relances-count" class="badge">0</span></div>
-        <div id="relances-list" class="leads-list">
+        <div id="relances-list" class="leads-list card">
           <div class="loading">Chargement...</div>
         </div>
       </div>
-
-      <!-- Discussions -->
       <div>
         <div class="section-title">💬 En discussion +3j <span id="discussions-count" class="badge">0</span></div>
-        <div id="discussions-list" class="leads-list">
+        <div id="discussions-list" class="leads-list card">
           <div class="loading">Chargement...</div>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Modal -->
   <div id="modal" class="modal hidden">
     <div class="modal-backdrop" onclick="closeModal()"></div>
     <div class="modal-content">
@@ -49,7 +46,6 @@
         <button onclick="closeModal()" class="modal-close">✕</button>
       </div>
       <div class="modal-body" id="modal-body"></div>
-      <div class="modal-footer" id="modal-footer"></div>
     </div>
   </div>
 
