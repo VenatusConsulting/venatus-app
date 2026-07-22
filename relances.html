@@ -7,36 +7,53 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav>
-    <div class="nav-logo">💎 Venatus</div>
-    <div class="nav-links">
-      <a href="index.html">Dashboard</a>
-      <a href="leads.html">Leads</a>
-      <a href="relances.html" class="active">Relances</a>
-      <a href="pipeline.html">Pipeline</a>
-    </div>
-  </nav>
 
-  <main>
-    <div class="page-header">
-      <h1>Relances du jour</h1>
-    </div>
+  <aside class="sidebar">
+    <div class="sidebar-logo">💎 Venatus</div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="sidebar-link">
+        <span class="sidebar-icon">📊</span> Tableau de bord
+      </a>
+      <a href="leads.html" class="sidebar-link">
+        <span class="sidebar-icon">👤</span> Leads
+      </a>
+      <a href="relances.html" class="sidebar-link active">
+        <span class="sidebar-icon">⏰</span> Relances
+      </a>
+      <a href="pipeline.html" class="sidebar-link">
+        <span class="sidebar-icon">📋</span> Pipeline
+      </a>
+    </nav>
+  </aside>
 
-    <div class="grid-2">
-      <div>
-        <div class="section-title">⏰ À relancer <span id="relances-count" class="badge">0</span></div>
-        <div id="relances-list" class="leads-list card">
-          <div class="loading">Chargement...</div>
+  <div class="main-wrap">
+    <div class="main-content">
+      <div class="page-header">
+        <h1>Relances du jour</h1>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="section-title-wrap">
+            ⏰ À relancer
+            <span id="relances-count" class="badge">0</span>
+          </div>
+          <div id="relances-list" class="card leads-list">
+            <div class="loading">Chargement...</div>
+          </div>
+        </div>
+        <div>
+          <div class="section-title-wrap">
+            💬 En discussion +3j
+            <span id="discussions-count" class="badge">0</span>
+          </div>
+          <div id="discussions-list" class="card leads-list">
+            <div class="loading">Chargement...</div>
+          </div>
         </div>
       </div>
-      <div>
-        <div class="section-title">💬 En discussion +3j <span id="discussions-count" class="badge">0</span></div>
-        <div id="discussions-list" class="leads-list card">
-          <div class="loading">Chargement...</div>
-        </div>
-      </div>
     </div>
-  </main>
+  </div>
 
   <div id="modal" class="modal hidden">
     <div class="modal-backdrop" onclick="closeModal()"></div>
