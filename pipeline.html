@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venatus — Pipeline</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <div class="nav-logo">💎 Venatus</div>
+    <div class="nav-links">
+      <a href="index.html">Dashboard</a>
+      <a href="leads.html">Leads</a>
+      <a href="relances.html">Relances</a>
+      <a href="pipeline.html" class="active">Pipeline</a>
+    </div>
+  </nav>
+
+  <main class="pipeline-main">
+    <div class="page-header">
+      <h1>Pipeline</h1>
+      <span class="badge" id="pipeline-total">—</span>
+    </div>
+    <div class="kanban" id="kanban">
+      <div class="loading">Chargement...</div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-pseudo">—</h2>
+        <button onclick="closeModal()" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script src="pipeline.js"></script>
+</body>
+</html>
