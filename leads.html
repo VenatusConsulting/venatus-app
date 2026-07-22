@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venatus — Leads</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <div class="nav-logo">💎 Venatus</div>
+    <div class="nav-links">
+      <a href="index.html">Dashboard</a>
+      <a href="leads.html" class="active">Leads</a>
+      <a href="relances.html">Relances</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>Leads</h1>
+      <span id="leads-total" class="badge">—</span>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters">
+      <input type="text" id="search" placeholder="🔍 Rechercher un pseudo..." class="search-input">
+      <select id="filter-statut" class="filter-select">
+        <option value="tous">Tous les statuts</option>
+        <option value="nouveau">🆕 Nouveau</option>
+        <option value="contacte">📨 Contacté</option>
+        <option value="en_discussion">💬 En discussion</option>
+        <option value="signe">✅ Signé</option>
+        <option value="refus">❌ Refus</option>
+        <option value="ghosted">👻 Ghosted</option>
+      </select>
+      <select id="filter-niche" class="filter-select">
+        <option value="">Toutes les niches</option>
+        <option value="influenceuse">💋 Influenceuse</option>
+        <option value="fitness">💪 Fitness</option>
+        <option value="gaming">🎮 Gaming</option>
+        <option value="cosplay">🎨 Cosplay</option>
+      </select>
+    </div>
+
+    <!-- Liste -->
+    <div class="card">
+      <div id="leads-list" class="leads-list">
+        <div class="loading">Chargement...</div>
+      </div>
+      <div class="pagination">
+        <button id="prev-btn" class="btn-page" disabled>← Précédent</button>
+        <span id="page-info">Page 1</span>
+        <button id="next-btn" class="btn-page">Suivant →</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal fiche lead -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-pseudo">—</h2>
+        <button onclick="closeModal()" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script src="leads.js"></script>
+</body>
+</html>
