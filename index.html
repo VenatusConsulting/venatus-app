@@ -15,6 +15,7 @@
       <a href="leads.html" class="sidebar-link"><span>👤</span> Leads</a>
       <a href="relances.html" class="sidebar-link"><span>⏰</span> Relances</a>
       <a href="pipeline.html" class="sidebar-link"><span>📋</span> Pipeline</a>
+      <a href="stats.html" class="sidebar-link"><span>💬</span> Stats DM</a>
     </nav>
   </aside>
 
@@ -26,10 +27,8 @@
         <span id="date" class="date"></span>
       </div>
 
-      <!-- Objectif du jour -->
       <div id="objectif-day" class="card objectif-card"></div>
 
-      <!-- Stats -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Total leads</div>
@@ -49,7 +48,6 @@
         </div>
       </div>
 
-      <!-- Alerte retards -->
       <div class="alerte-retard hidden" id="alerte-retard" onclick="window.location='relances.html'">
         <span>🔥</span>
         <div>
@@ -58,7 +56,6 @@
         </div>
       </div>
 
-      <!-- Sections leads -->
       <div class="grid-2">
         <div>
           <div class="section-title-wrap">⏰ Relances à faire <span id="count-relances" class="badge">0</span></div>
@@ -70,25 +67,19 @@
         </div>
       </div>
 
-      <!-- Chemin vers la signature -->
       <div class="card funnel-card">
-        <div class="card-header">
-          <h2>📈 Chemin vers la première signature</h2>
-        </div>
+        <div class="card-header"><h2>📈 Chemin vers la première signature</h2></div>
         <div id="funnel-bars"></div>
         <div class="funnel-insight" id="funnel-insight"></div>
       </div>
 
-      <!-- KPIs -->
       <div class="kpi-grid" id="kpi-grid"></div>
 
-      <!-- Par statut -->
       <div class="card">
         <div class="card-header"><h2>Par statut</h2></div>
         <div class="statut-grid" id="statut-grid"></div>
       </div>
 
-      <!-- Par niche -->
       <div class="card">
         <div class="card-header"><h2>Par niche</h2></div>
         <div class="niche-grid" id="niche-grid"></div>
