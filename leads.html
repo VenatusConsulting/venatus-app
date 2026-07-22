@@ -13,6 +13,7 @@
       <a href="index.html">Dashboard</a>
       <a href="leads.html" class="active">Leads</a>
       <a href="relances.html">Relances</a>
+      <a href="pipeline.html">Pipeline</a>
     </div>
   </nav>
 
@@ -22,7 +23,6 @@
       <span id="leads-total" class="badge">—</span>
     </div>
 
-    <!-- Filtres -->
     <div class="filters">
       <input type="text" id="search" placeholder="🔍 Rechercher un pseudo..." class="search-input">
       <select id="filter-statut" class="filter-select">
@@ -43,7 +43,6 @@
       </select>
     </div>
 
-    <!-- Liste -->
     <div class="card">
       <div id="leads-list" class="leads-list">
         <div class="loading">Chargement...</div>
@@ -56,7 +55,6 @@
     </div>
   </main>
 
-  <!-- Modal fiche lead -->
   <div id="modal" class="modal hidden">
     <div class="modal-backdrop" onclick="closeModal()"></div>
     <div class="modal-content">
@@ -65,7 +63,6 @@
         <button onclick="closeModal()" class="modal-close">✕</button>
       </div>
       <div class="modal-body" id="modal-body"></div>
-      <div class="modal-footer" id="modal-footer"></div>
     </div>
   </div>
 
