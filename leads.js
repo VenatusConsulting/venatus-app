@@ -18,6 +18,17 @@ let page     = 0;
 let total    = 0;
 const LIMIT  = 20;
 let debounce = null;
+let currentId = null;
+
+function getRetard(dateRelance) {
+  if (!dateRelance) return null;
+  const [d, m, y] = dateRelance.split("/").map(Number);
+  const relance   = new Date(y, m - 1, d);
+  const today     = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.floor((today - relance) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? diff : null;
+}
 
 function getFilters() {
   return {
@@ -46,8 +57,9 @@ function renderLeads(list) {
     return;
   }
   el.innerHTML = list.map(lead => {
-    const s = STATUTS[lead.statut] || STATUTS.nouveau;
-    const n = NICHES[lead.niche] || "";
+    const s      = STATUTS[lead.statut] || STATUTS.nouveau;
+    const n      = NICHES[lead.niche] || "";
+    const retard = getRetard(lead.date_relance);
     return `
       <div class="lead-row" onclick="openLead('${lead._id}')">
         <div class="lead-main">
@@ -55,7 +67,12 @@ function renderLeads(list) {
           <div class="lead-meta">
             ${n ? `<span class="tag">${n}</span>` : ""}
             ${lead.abonnes ? `<span class="tag">👥 ${lead.abonnes}</span>` : ""}
-            ${lead.date_relance ? `<span class="tag">⏰ ${lead.date_relance}</span>` : ""}
+            ${retard
+              ? `<span class="tag retard-tag">⚠️ ${retard}j de retard</span>`
+              : lead.date_relance
+                ? `<span class="tag">⏰ ${lead.date_relance}</span>`
+                : ""
+            }
           </div>
         </div>
         <div class="lead-statut" style="color:${s.color}">${s.label}</div>
@@ -66,19 +83,16 @@ function renderLeads(list) {
 
 function updatePagination() {
   const pages = Math.ceil(total / LIMIT);
-  document.getElementById("page-info").textContent   = `Page ${page + 1} / ${pages || 1}`;
-  document.getElementById("prev-btn").disabled        = page === 0;
-  document.getElementById("next-btn").disabled        = (page + 1) * LIMIT >= total;
+  document.getElementById("page-info").textContent = `Page ${page + 1} / ${pages || 1}`;
+  document.getElementById("prev-btn").disabled     = page === 0;
+  document.getElementById("next-btn").disabled     = (page + 1) * LIMIT >= total;
 }
 
-// Modal
-let currentId = null;
-
 async function openLead(id) {
-  currentId = id;
+  currentId  = id;
   const lead = await getLead(id);
   const s    = STATUTS[lead.statut] || STATUTS.nouveau;
-  const n    = NICHES[lead.niche] || "—";
+  const retard = getRetard(lead.date_relance);
 
   document.getElementById("modal-pseudo").textContent = lead.pseudo;
   document.getElementById("modal").classList.remove("hidden");
@@ -99,16 +113,39 @@ async function openLead(id) {
       </div>
       <div class="detail-row">
         <span class="detail-label">Niche</span>
-        <span>${n}</span>
+        <span>${NICHES[lead.niche] || "—"}</span>
       </div>
       <div class="detail-row">
         <span class="detail-label">Ajouté le</span>
         <span>${lead.date_ajout || "—"}</span>
       </div>
-      ${lead.date_contact ? `<div class="detail-row"><span class="detail-label">Contacté le</span><span>${lead.date_contact}</span></div>` : ""}
-      ${lead.date_relance ? `<div class="detail-row"><span class="detail-label">Relance</span><span>⏰ ${lead.date_relance}</span></div>` : ""}
-      ${lead.dm_utilise ? `<div class="detail-row"><span class="detail-label">DM utilisé</span><span>${lead.dm_utilise.toUpperCase()}</span></div>` : ""}
-      ${lead.notes ? `<div class="detail-row notes"><span class="detail-label">Notes</span><span>${lead.notes}</span></div>` : ""}
+      ${lead.date_contact ? `
+        <div class="detail-row">
+          <span class="detail-label">Contacté le</span>
+          <span>${lead.date_contact}</span>
+        </div>
+      ` : ""}
+      ${lead.date_relance ? `
+        <div class="detail-row">
+          <span class="detail-label">Relance</span>
+          <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
+            ⏰ ${lead.date_relance}
+            ${retard ? `<span class="retard-inline">⚠️ ${retard}j de retard</span>` : ""}
+          </span>
+        </div>
+      ` : ""}
+      ${lead.dm_utilise ? `
+        <div class="detail-row">
+          <span class="detail-label">DM utilisé</span>
+          <span>${lead.dm_utilise.toUpperCase()}</span>
+        </div>
+      ` : ""}
+      ${lead.notes ? `
+        <div class="detail-row notes">
+          <span class="detail-label">Notes</span>
+          <span>${lead.notes}</span>
+        </div>
+      ` : ""}
     </div>
 
     <div class="modal-section">
@@ -152,18 +189,15 @@ function closeModal() {
   currentId = null;
 }
 
-// Events
 document.getElementById("search").addEventListener("input", () => {
   clearTimeout(debounce);
   debounce = setTimeout(() => { page = 0; loadLeads(); }, 400);
 });
-
 document.getElementById("filter-statut").addEventListener("change", () => { page = 0; loadLeads(); });
 document.getElementById("filter-niche").addEventListener("change",  () => { page = 0; loadLeads(); });
 document.getElementById("prev-btn").addEventListener("click", () => { page--; loadLeads(); });
 document.getElementById("next-btn").addEventListener("click", () => { page++; loadLeads(); });
 
-// Params URL
 const params = new URLSearchParams(window.location.search);
 if (params.get("statut")) document.getElementById("filter-statut").value = params.get("statut");
 if (params.get("niche"))  document.getElementById("filter-niche").value  = params.get("niche");
