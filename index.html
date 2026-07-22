@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venatus CRM</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">💎 Venatus</div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="sidebar-link active"><span>📊</span> Dashboard</a>
+      <a href="leads.html" class="sidebar-link"><span>👤</span> Leads</a>
+      <a href="relances.html" class="sidebar-link"><span>⏰</span> Relances</a>
+      <a href="pipeline.html" class="sidebar-link"><span>📋</span> Pipeline</a>
+    </nav>
+  </aside>
+
+  <div class="main-wrap">
+    <div class="main-content">
+
+      <div class="page-header">
+        <h1>Tableau de bord</h1>
+        <span id="date" class="date"></span>
+      </div>
+
+      <!-- Objectif du jour -->
+      <div id="objectif-day" class="card objectif-card"></div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total leads</div>
+          <div class="stat-value" id="total">—</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Signés</div>
+          <div class="stat-value" id="signe">—</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">En discussion</div>
+          <div class="stat-value" id="discussion">—</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Taux de réponse</div>
+          <div class="stat-value" id="taux">—</div>
+        </div>
+      </div>
+
+      <!-- Alerte retards -->
+      <div class="alerte-retard hidden" id="alerte-retard" onclick="window.location='relances.html'">
+        <span>🔥</span>
+        <div>
+          <div class="alerte-title" id="alerte-title"></div>
+          <div class="alerte-sub">Clique pour les gérer →</div>
+        </div>
+      </div>
+
+      <!-- Sections leads -->
+      <div class="grid-2">
+        <div>
+          <div class="section-title-wrap">⏰ Relances à faire <span id="count-relances" class="badge">0</span></div>
+          <div class="card" id="list-relances"><div class="loading">Chargement...</div></div>
+        </div>
+        <div>
+          <div class="section-title-wrap">💬 En discussion +3j <span id="count-discussion" class="badge">0</span></div>
+          <div class="card" id="list-discussion"><div class="loading">Chargement...</div></div>
+        </div>
+      </div>
+
+      <!-- Chemin vers la signature -->
+      <div class="card funnel-card">
+        <div class="card-header">
+          <h2>📈 Chemin vers la première signature</h2>
+        </div>
+        <div id="funnel-bars"></div>
+        <div class="funnel-insight" id="funnel-insight"></div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <!-- Par statut -->
+      <div class="card">
+        <div class="card-header"><h2>Par statut</h2></div>
+        <div class="statut-grid" id="statut-grid"></div>
+      </div>
+
+      <!-- Par niche -->
+      <div class="card">
+        <div class="card-header"><h2>Par niche</h2></div>
+        <div class="niche-grid" id="niche-grid"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-pseudo">—</h2>
+        <button onclick="closeModal()" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
