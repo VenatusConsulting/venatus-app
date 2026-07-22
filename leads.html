@@ -7,53 +7,64 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav>
-    <div class="nav-logo">💎 Venatus</div>
-    <div class="nav-links">
-      <a href="index.html">Dashboard</a>
-      <a href="leads.html" class="active">Leads</a>
-      <a href="relances.html">Relances</a>
-      <a href="pipeline.html">Pipeline</a>
-    </div>
-  </nav>
 
-  <main>
-    <div class="page-header">
-      <h1>Leads</h1>
-      <span id="leads-total" class="badge">—</span>
-    </div>
+  <aside class="sidebar">
+    <div class="sidebar-logo">💎 Venatus</div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="sidebar-link">
+        <span class="sidebar-icon">📊</span> Tableau de bord
+      </a>
+      <a href="leads.html" class="sidebar-link active">
+        <span class="sidebar-icon">👤</span> Leads
+      </a>
+      <a href="relances.html" class="sidebar-link">
+        <span class="sidebar-icon">⏰</span> Relances
+      </a>
+      <a href="pipeline.html" class="sidebar-link">
+        <span class="sidebar-icon">📋</span> Pipeline
+      </a>
+    </nav>
+  </aside>
 
-    <div class="filters">
-      <input type="text" id="search" placeholder="🔍 Rechercher un pseudo..." class="search-input">
-      <select id="filter-statut" class="filter-select">
-        <option value="tous">Tous les statuts</option>
-        <option value="nouveau">🆕 Nouveau</option>
-        <option value="contacte">📨 Contacté</option>
-        <option value="en_discussion">💬 En discussion</option>
-        <option value="signe">✅ Signé</option>
-        <option value="refus">❌ Refus</option>
-        <option value="ghosted">👻 Ghosted</option>
-      </select>
-      <select id="filter-niche" class="filter-select">
-        <option value="">Toutes les niches</option>
-        <option value="influenceuse">💋 Influenceuse</option>
-        <option value="fitness">💪 Fitness</option>
-        <option value="gaming">🎮 Gaming</option>
-        <option value="cosplay">🎨 Cosplay</option>
-      </select>
-    </div>
-
-    <div class="card">
-      <div id="leads-list" class="leads-list">
-        <div class="loading">Chargement...</div>
+  <div class="main-wrap">
+    <div class="main-content">
+      <div class="page-header">
+        <h1>Leads</h1>
+        <span id="leads-total" class="badge">—</span>
       </div>
-      <div class="pagination">
-        <button id="prev-btn" class="btn-page" disabled>← Précédent</button>
-        <span id="page-info">Page 1</span>
-        <button id="next-btn" class="btn-page">Suivant →</button>
+
+      <div class="filters">
+        <input type="text" id="search" placeholder="🔍 Rechercher un pseudo..." class="search-input">
+        <select id="filter-statut" class="filter-select">
+          <option value="tous">Tous les statuts</option>
+          <option value="nouveau">🆕 Nouveau</option>
+          <option value="contacte">📨 Contacté</option>
+          <option value="en_discussion">💬 En discussion</option>
+          <option value="signe">✅ Signé</option>
+          <option value="refus">❌ Refus</option>
+          <option value="ghosted">👻 Ghosted</option>
+        </select>
+        <select id="filter-niche" class="filter-select">
+          <option value="">Toutes les niches</option>
+          <option value="influenceuse">💋 Influenceuse</option>
+          <option value="fitness">💪 Fitness</option>
+          <option value="gaming">🎮 Gaming</option>
+          <option value="cosplay">🎨 Cosplay</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <div id="leads-list" class="leads-list">
+          <div class="loading">Chargement...</div>
+        </div>
+        <div class="pagination">
+          <button id="prev-btn" class="btn-page" disabled>← Précédent</button>
+          <span id="page-info">Page 1</span>
+          <button id="next-btn" class="btn-page">Suivant →</button>
+        </div>
       </div>
     </div>
-  </main>
+  </div>
 
   <div id="modal" class="modal hidden">
     <div class="modal-backdrop" onclick="closeModal()"></div>
