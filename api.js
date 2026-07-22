@@ -43,3 +43,8 @@ async function getRelances() {
   const res = await fetch(`${API}/leads/relances`);
   return res.json();
 }
+
+async function getStatsDM() {
+  const res = await fetch(`${API}/stats/dm`);
+  return res.json();
+}
