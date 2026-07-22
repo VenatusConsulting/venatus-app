@@ -7,7 +7,24 @@ const STATUTS = {
   ghosted:       { label: "👻 Ghosted",        color: "#888"    },
 };
 
+const NICHES = {
+  influenceuse: "💋 Influenceuse",
+  fitness:      "💪 Fitness",
+  gaming:       "🎮 Gaming",
+  cosplay:      "🎨 Cosplay",
+};
+
 let currentId = null;
+
+function getRetard(dateRelance) {
+  if (!dateRelance) return null;
+  const [d, m, y] = dateRelance.split("/").map(Number);
+  const relance   = new Date(y, m - 1, d);
+  const today     = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.floor((today - relance) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? diff : null;
+}
 
 function renderList(leads, containerId) {
   const el = document.getElementById(containerId);
@@ -16,14 +33,20 @@ function renderList(leads, containerId) {
     return;
   }
   el.innerHTML = leads.map(lead => {
-    const s = STATUTS[lead.statut] || STATUTS.nouveau;
+    const s      = STATUTS[lead.statut] || STATUTS.nouveau;
+    const retard = getRetard(lead.date_relance);
     return `
       <div class="lead-row" onclick="openLead('${lead._id}')">
         <div class="lead-main">
           <div class="lead-pseudo">${lead.pseudo}</div>
           <div class="lead-meta">
             <span class="tag">👥 ${lead.abonnes || "?"}</span>
-            ${lead.date_relance ? `<span class="tag">⏰ ${lead.date_relance}</span>` : ""}
+            ${retard
+              ? `<span class="tag retard-tag">⚠️ ${retard}j de retard</span>`
+              : lead.date_relance
+                ? `<span class="tag">⏰ ${lead.date_relance}</span>`
+                : ""
+            }
           </div>
         </div>
         <div class="lead-statut" style="color:${s.color}">${s.label}</div>
@@ -41,9 +64,10 @@ async function loadRelances() {
 }
 
 async function openLead(id) {
-  currentId = id;
+  currentId  = id;
   const lead = await getLead(id);
   const s    = STATUTS[lead.statut] || STATUTS.nouveau;
+  const retard = getRetard(lead.date_relance);
 
   document.getElementById("modal-pseudo").textContent = lead.pseudo;
   document.getElementById("modal").classList.remove("hidden");
@@ -62,8 +86,21 @@ async function openLead(id) {
         <span class="detail-label">Abonnés</span>
         <span>${lead.abonnes || "—"}</span>
       </div>
-      ${lead.date_relance ? `<div class="detail-row"><span class="detail-label">Relance</span><span>⏰ ${lead.date_relance}</span></div>` : ""}
-      ${lead.notes ? `<div class="detail-row notes"><span class="detail-label">Notes</span><span>${lead.notes}</span></div>` : ""}
+      ${lead.date_relance ? `
+        <div class="detail-row">
+          <span class="detail-label">Relance</span>
+          <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
+            ⏰ ${lead.date_relance}
+            ${retard ? `<span class="retard-inline">⚠️ ${retard}j de retard</span>` : ""}
+          </span>
+        </div>
+      ` : ""}
+      ${lead.notes ? `
+        <div class="detail-row notes">
+          <span class="detail-label">Notes</span>
+          <span>${lead.notes}</span>
+        </div>
+      ` : ""}
     </div>
 
     <div class="modal-section">
