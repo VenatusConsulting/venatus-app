@@ -15,27 +15,62 @@ const NICHES = {
 };
 
 async function loadDashboard() {
-  const stats = await getStats();
+  const [stats, goalData] = await Promise.all([getStats(), getGoal()]);
+  const goal        = goalData.goal || 210;
+  const goalParJour = Math.ceil(goal / 7);
+  const dms         = stats.dms_today;
+  const reste       = Math.max(goalParJour - dms, 0);
+  const pctJour     = Math.min(Math.round((dms / goalParJour) * 100), 100);
+  const pctWeek     = Math.min(Math.round((stats.contacte / goal) * 100), 100);
 
-  document.getElementById("date").textContent = new Date().toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" });
+  document.getElementById("date").textContent = new Date().toLocaleDateString("fr-FR", {
+    weekday: "long", day: "numeric", month: "long"
+  });
+
+  // Objectif du jour
+  document.getElementById("objectif-day").innerHTML = `
+    <div class="objectif-wrap">
+      <div class="objectif-top">
+        <div>
+          <div class="objectif-title">Objectif du jour</div>
+          <div class="objectif-sub">${goalParJour} DMs/jour pour atteindre ${goal}/semaine</div>
+        </div>
+        <div class="objectif-counter ${dms >= goalParJour ? 'done' : ''}">
+          ${dms}/${goalParJour}
+        </div>
+      </div>
+      <div class="progress" style="margin-top:10px;">
+        <div class="progress-bar" style="width:${pctJour}%"></div>
+      </div>
+      <div class="objectif-footer">
+        ${dms >= goalParJour
+          ? `<span class="objectif-ok">🔥 Objectif du jour atteint !</span>`
+          : `<span class="objectif-reste">⚡ Il te reste <strong>${reste} DMs</strong> aujourd'hui</span>`
+        }
+        <span class="objectif-week">Goal hebdo : <strong>${pctWeek}%</strong></span>
+      </div>
+    </div>
+  `;
+
+  // Stats principales
   document.getElementById("total").textContent      = stats.total;
   document.getElementById("signe").textContent      = stats.signe;
   document.getElementById("discussion").textContent = stats.discussion;
   document.getElementById("taux").textContent       = stats.taux_reponse + "%";
 
-  const dms   = stats.dms_today;
-  const pct   = Math.min(Math.round((dms / 30) * 100), 100);
-  document.getElementById("dms-today").textContent        = dms;
-  document.getElementById("progress-bar").style.width     = pct + "%";
-  document.getElementById("dms-today-badge").textContent  = dms >= 30 ? "🔥 Objectif atteint !" : `${pct}%`;
-  document.getElementById("dms-today-badge").className    = "badge " + (dms >= 30 ? "green" : dms >= 20 ? "blue" : "");
+  // DMs aujourd'hui
+  const pct = Math.min(Math.round((dms / 30) * 100), 100);
+  document.getElementById("dms-today").textContent       = dms;
+  document.getElementById("progress-bar").style.width    = pct + "%";
+  document.getElementById("dms-today-badge").textContent = dms >= 30 ? "🔥 Objectif atteint !" : `${pct}%`;
+  document.getElementById("dms-today-badge").className   = "badge " + (dms >= 30 ? "green" : dms >= 20 ? "blue" : "");
 
+  // Alertes
   document.getElementById("relances-count").textContent    = stats.relances_today;
   document.getElementById("discussions-count").textContent = stats.discussions_attente;
 
   // Par statut
-  const sg = document.getElementById("statut-grid");
-  sg.innerHTML = Object.entries(STATUTS).map(([key, val]) => `
+  document.getElementById("statut-grid").innerHTML = Object.entries(STATUTS).map(([key, val]) => `
     <div class="statut-item" onclick="window.location='leads.html?statut=${key}'">
       <div class="statut-dot" style="background:${val.color}"></div>
       <div class="statut-label">${val.label}</div>
@@ -44,8 +79,7 @@ async function loadDashboard() {
   `).join("");
 
   // Par niche
-  const ng = document.getElementById("niche-grid");
-  ng.innerHTML = Object.entries(NICHES).map(([key, label]) => `
+  document.getElementById("niche-grid").innerHTML = Object.entries(NICHES).map(([key, label]) => `
     <div class="niche-item" onclick="window.location='leads.html?niche=${key}'">
       <div class="niche-label">${label}</div>
       <div class="niche-count">${stats.par_niche[key] || 0}</div>
