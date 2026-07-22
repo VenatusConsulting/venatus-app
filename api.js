@@ -5,6 +5,11 @@ async function getStats() {
   return res.json();
 }
 
+async function getGoal() {
+  const res = await fetch(`${API}/goal`);
+  return res.json();
+}
+
 async function getLeads(params = {}) {
   const q = new URLSearchParams(params).toString();
   const res = await fetch(`${API}/leads?${q}`);
