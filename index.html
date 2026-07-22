@@ -7,91 +7,135 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav>
-    <div class="nav-logo">💎 Venatus</div>
-    <div class="nav-links">
-      <a href="index.html" class="active">Dashboard</a>
-      <a href="leads.html">Leads</a>
-      <a href="relances.html">Relances</a>
-      <a href="pipeline.html">Pipeline</a>
-    </div>
-  </nav>
 
-  <main>
-    <div class="page-header">
-      <h1>Dashboard</h1>
-      <span id="date" class="date"></span>
-    </div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">💎 Venatus</div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="sidebar-link active">
+        <span class="sidebar-icon">📊</span> Tableau de bord
+      </a>
+      <a href="leads.html" class="sidebar-link">
+        <span class="sidebar-icon">👤</span> Leads
+      </a>
+      <a href="relances.html" class="sidebar-link">
+        <span class="sidebar-icon">⏰</span> Relances
+      </a>
+      <a href="pipeline.html" class="sidebar-link">
+        <span class="sidebar-icon">📋</span> Pipeline
+      </a>
+    </nav>
+  </aside>
 
-    <!-- Objectif du jour -->
-    <div id="objectif-day" class="card objectif-card"></div>
+  <!-- Main -->
+  <div class="main-wrap">
+    <div class="main-content">
 
-    <!-- Stats principales -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total leads</div>
-        <div class="stat-value" id="total">—</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-label">Signés</div>
-        <div class="stat-value" id="signe">—</div>
-      </div>
-      <div class="stat-card blue">
-        <div class="stat-label">En discussion</div>
-        <div class="stat-value" id="discussion">—</div>
-      </div>
-      <div class="stat-card purple">
-        <div class="stat-label">Taux de réponse</div>
-        <div class="stat-value" id="taux">—</div>
-      </div>
-    </div>
-
-    <!-- DMs aujourd'hui -->
-    <div class="card">
-      <div class="card-header">
-        <h2>DMs aujourd'hui</h2>
-        <span id="dms-today-badge" class="badge">—</span>
-      </div>
-      <div class="progress-wrap">
-        <div class="progress-info">
-          <span id="dms-today">0</span>/30
+      <!-- Objectif du jour -->
+      <div class="objectif-section">
+        <div class="objectif-header">
+          <span class="objectif-label">🎯 Objectif du jour</span>
+          <span id="objectif-serie" class="serie-badge"></span>
         </div>
-        <div class="progress">
-          <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+        <div class="objectif-circles">
+          <div class="circle-wrap">
+            <div class="circle" id="circle-dms">
+              <svg viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" fill="none" stroke="#1e1e35" stroke-width="6"/>
+                <circle cx="40" cy="40" r="34" fill="none" stroke="#667eea" stroke-width="6"
+                  stroke-dasharray="213.6" id="arc-dms" stroke-dashoffset="213.6"
+                  stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              </svg>
+              <div class="circle-inner">
+                <div class="circle-value" id="val-dms">0</div>
+              </div>
+            </div>
+            <div class="circle-label">Leads contactés sur <span id="goal-par-jour">—</span></div>
+          </div>
+          <div class="circle-wrap">
+            <div class="circle" id="circle-relances">
+              <svg viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="34" fill="none" stroke="#1e1e35" stroke-width="6"/>
+                <circle cx="40" cy="40" r="34" fill="none" stroke="#f59e0b" stroke-width="6"
+                  stroke-dasharray="213.6" id="arc-relances" stroke-dashoffset="213.6"
+                  stroke-linecap="round" transform="rotate(-90 40 40)"/>
+              </svg>
+              <div class="circle-inner">
+                <div class="circle-value" id="val-relances">0</div>
+              </div>
+            </div>
+            <div class="circle-label">Relances effectuées (<span id="relances-total">—</span> dues aujourd'hui)</div>
+          </div>
         </div>
+        <div class="objectif-sub" id="objectif-sub"></div>
       </div>
-    </div>
 
-    <!-- Alertes -->
-    <div class="grid-2">
-      <div class="card alert-card" onclick="window.location='relances.html'">
-        <div class="alert-icon">⏰</div>
+      <!-- Alerte retards -->
+      <div class="alerte-retard hidden" id="alerte-retard" onclick="window.location='relances.html'">
+        <span class="alerte-icon">🔥</span>
         <div>
-          <div class="alert-count" id="relances-count">—</div>
-          <div class="alert-label">Relances aujourd'hui</div>
+          <div class="alerte-title" id="alerte-title"></div>
+          <div class="alerte-sub">Clique pour les gérer</div>
         </div>
+        <span class="alerte-arrow">→</span>
       </div>
-      <div class="card alert-card" onclick="window.location='relances.html'">
-        <div class="alert-icon">💬</div>
-        <div>
-          <div class="alert-count" id="discussions-count">—</div>
-          <div class="alert-label">Discussions en attente</div>
+
+      <!-- À contacter -->
+      <div class="section" id="section-contacter">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">👤</span>
+            À contacter
+            <span class="section-badge" id="count-contacter">0</span>
+          </div>
         </div>
+        <div class="section-list" id="list-contacter"></div>
       </div>
-    </div>
 
-    <!-- Par statut -->
-    <div class="card">
-      <div class="card-header"><h2>Par statut</h2></div>
-      <div class="statut-grid" id="statut-grid"></div>
-    </div>
+      <!-- Relances à faire -->
+      <div class="section" id="section-relances">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">⏰</span>
+            Relances à faire
+            <span class="section-badge" id="count-relances">0</span>
+          </div>
+        </div>
+        <div class="section-list" id="list-relances"></div>
+      </div>
 
-    <!-- Par niche -->
-    <div class="card">
-      <div class="card-header"><h2>Par niche</h2></div>
-      <div class="niche-grid" id="niche-grid"></div>
+      <!-- En discussion -->
+      <div class="section" id="section-discussion">
+        <div class="section-header">
+          <div class="section-title">
+            <span class="section-icon">💬</span>
+            En discussion sans réponse
+            <span class="section-badge" id="count-discussion">0</span>
+          </div>
+        </div>
+        <div class="section-list" id="list-discussion"></div>
+      </div>
+
+      <!-- Chemin vers la signature -->
+      <div class="pipeline-section">
+        <div class="pipeline-title">🏆 Chemin vers la première signature</div>
+        <div class="pipeline-steps" id="pipeline-steps"></div>
+      </div>
+
     </div>
-  </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeModal()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-pseudo">—</h2>
+        <button onclick="closeModal()" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
 
   <script src="api.js"></script>
   <script src="dashboard.js"></script>
