@@ -1,4 +1,4 @@
-import { getStatsDM, getStatsComptes, getStatsNiches, getStatsTendances } from "./api-module.js";
+import { getStatsDM, getStatsComptes, getStatsNiches, getStatsTendances, getStatsProfils } from "./api-module.js";
 
 const DM_TEMPLATES_TEXT = {
   dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗" },
@@ -9,6 +9,7 @@ const DM_TEMPLATES_TEXT = {
 
 const DM_COLORS    = { dm1: "#667eea", dm2: "#f59e0b", dm3: "#10b981", dm4: "#ec4899" };
 const NICHE_LABELS = { influenceuse: "💋 Influenceuse", fitness: "💪 Fitness", gaming: "🎮 Gaming", cosplay: "🎨 Cosplay" };
+const NICHE_COLORS = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
 const COMPTE_COLORS = ["#667eea","#f59e0b","#10b981","#ec4899","#29b6f6","#8b5cf6"];
 
 function taux_color(taux) {
@@ -17,7 +18,14 @@ function taux_color(taux) {
   return "var(--text3)";
 }
 
-function renderBars(items, labelFn, colorFn, valueFn = v => v.taux + "%") {
+function fmt_num(n) {
+  if (!n) return "—";
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+  if (n >= 1000)    return Math.round(n / 1000) + "K";
+  return n.toString();
+}
+
+function renderBars(items, labelFn, colorFn) {
   const max = Math.max(...items.map(v => v.taux), 1);
   return items.map(item => `
     <div class="dm-bar-row">
@@ -45,9 +53,9 @@ function renderTable(headers, rows) {
 // ── DM ──────────────────────────────────────────────────────────────────────
 
 async function loadDM() {
-  const data = await getStatsDM();
+  const data    = await getStatsDM();
   const entries = Object.entries(data);
-  const best  = entries.reduce((a, b) => b[1].taux > a[1].taux ? b : a, entries[0]);
+  const best    = entries.reduce((a, b) => b[1].taux > a[1].taux ? b : a, entries[0]);
 
   if (best) {
     const [key, b] = best;
@@ -74,7 +82,7 @@ async function loadDM() {
     item => DM_COLORS[item.key]
   );
 
-  const sorted = entries.sort((a,b) => b[1].taux - a[1].taux);
+  const sorted = [...entries].sort((a,b) => b[1].taux - a[1].taux);
   document.getElementById("dm-table").innerHTML = renderTable(
     ["DM", "Envoyés", "Réponses", "Signés", "Taux", "Rang"],
     sorted.map(([key, val], i) => `
@@ -107,14 +115,12 @@ async function loadDM() {
 
 async function loadComptes() {
   const data = await getStatsComptes();
-
   if (!data.length) {
-    document.getElementById("best-compte-card").innerHTML = `<div class="empty">Aucun compte IG enregistré pour l'instant</div>`;
-    document.getElementById("comptes-bars").innerHTML = "";
-    document.getElementById("comptes-table").innerHTML = "";
+    ["best-compte-card","comptes-bars","comptes-table"].forEach(id =>
+      document.getElementById(id).innerHTML = '<div class="empty">Aucun compte IG enregistré</div>'
+    );
     return;
   }
-
   const best = data[0];
   document.getElementById("best-compte-card").innerHTML = `
     <div style="display:flex;align-items:center;gap:16px;">
@@ -130,13 +136,11 @@ async function loadComptes() {
       </div>
     </div>
   `;
-
   document.getElementById("comptes-bars").innerHTML = renderBars(
     data,
     item => item.compte,
-    (item, i) => COMPTE_COLORS[data.indexOf(item) % COMPTE_COLORS.length]
+    (item) => COMPTE_COLORS[data.indexOf(item) % COMPTE_COLORS.length]
   );
-
   document.getElementById("comptes-table").innerHTML = renderTable(
     ["Compte", "DMs envoyés", "Réponses", "Signés", "Taux", "Rang"],
     data.map((item, i) => `
@@ -154,13 +158,12 @@ async function loadComptes() {
 
 async function loadNiches() {
   const data = await getStatsNiches();
-  const NICHE_COLORS = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
-
   if (!data.length || data.every(n => n.total === 0)) {
-    document.getElementById("best-niche-card").innerHTML = `<div class="empty">Pas encore assez de données</div>`;
+    ["best-niche-card","niches-bars","niches-table"].forEach(id =>
+      document.getElementById(id).innerHTML = '<div class="empty">Pas encore assez de données</div>'
+    );
     return;
   }
-
   const best = data[0];
   document.getElementById("best-niche-card").innerHTML = `
     <div style="display:flex;align-items:center;gap:16px;">
@@ -176,15 +179,13 @@ async function loadNiches() {
       </div>
     </div>
   `;
-
   document.getElementById("niches-bars").innerHTML = renderBars(
     data,
     item => NICHE_LABELS[item.niche] || item.niche,
     item => NICHE_COLORS[item.niche] || "#667eea"
   );
-
   document.getElementById("niches-table").innerHTML = renderTable(
-    ["Niche", "Total leads", "Contactées", "Réponses", "Signés", "Taux", "Rang"],
+    ["Niche", "Total", "Contactées", "Réponses", "Signés", "Taux", "Rang"],
     data.map((item, i) => `
       <tr>
         <td style="color:${NICHE_COLORS[item.niche]};font-weight:600;">${NICHE_LABELS[item.niche] || item.niche}</td>
@@ -199,7 +200,7 @@ async function loadNiches() {
 // ── Tendances ────────────────────────────────────────────────────────────────
 
 async function loadTendances() {
-  const data = await getStatsTendances();
+  const data      = await getStatsTendances();
   const maxAjouts = Math.max(...data.map(d => d.ajouts), 1);
   const maxTaux   = Math.max(...data.map(d => d.taux), 1);
 
@@ -243,6 +244,77 @@ async function loadTendances() {
   );
 }
 
+// ── Profils ──────────────────────────────────────────────────────────────────
+
+async function loadProfils() {
+  const data = await getStatsProfils();
+
+  // KPIs croisés
+  const kpis = [
+    { icon: "👥", label: "Abonnés moyens (tous leads)",       val: fmt_num(data.tous?.moyenne) },
+    { icon: "💬", label: "Abonnés moyens (qui répondent)",    val: fmt_num(data.repondeurs?.moyenne), color: "var(--green)" },
+    { icon: "✅", label: "Abonnés moyens (signés)",           val: fmt_num(data.signes?.moyenne),    color: "var(--yellow)" },
+    { icon: "📊", label: "Médiane (qui répondent)",           val: fmt_num(data.repondeurs?.mediane) },
+    { icon: "🔽", label: "Min followers répondeurs",          val: fmt_num(data.repondeurs?.min) },
+    { icon: "🔼", label: "Max followers répondeurs",          val: fmt_num(data.repondeurs?.max) },
+  ];
+
+  document.getElementById("profils-kpis").innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-value" style="${k.color ? `color:${k.color}` : ""}">${k.val}</div>
+      <div class="kpi-label">${k.label}</div>
+    </div>
+  `).join("");
+
+  // Insight clé
+  const moy_rep  = data.repondeurs?.moyenne;
+  const moy_tous = data.tous?.moyenne;
+  let insight = "";
+  if (moy_rep && moy_tous) {
+    const diff = moy_rep > moy_tous ? "plus gros" : "plus petits";
+    insight = `Les profils qui répondent ont en moyenne <strong style="color:var(--green)">${fmt_num(moy_rep)} abonnés</strong> — des comptes ${diff} que la moyenne de tes leads (${fmt_num(moy_tous)}).`;
+  }
+  if (data.signes?.moyenne) {
+    insight += ` Tes leads signés ont en moyenne <strong style="color:var(--yellow)">${fmt_num(data.signes.moyenne)} abonnés</strong>.`;
+  }
+  document.getElementById("profils-insight").innerHTML = insight || "Pas encore assez de données pour afficher un insight.";
+
+  // Tranches par taux de réponse
+  const tranches = data.tranches || {};
+  const maxTaux  = Math.max(...Object.values(tranches).map(t => t.taux), 1);
+
+  document.getElementById("profils-tranches").innerHTML = Object.entries(tranches).map(([tranche, val]) => {
+    const pct   = Math.round((val.taux / maxTaux) * 100);
+    const color = val.taux >= 30 ? "var(--green)" : val.taux >= 15 ? "var(--yellow)" : "#667eea";
+    return `
+      <div class="dm-bar-row">
+        <div class="dm-bar-label" style="width:100px">${tranche}</div>
+        <div class="dm-bar-wrap">
+          <div class="dm-bar-bg">
+            <div class="dm-bar-fill" style="width:${pct}%;background:${color}"></div>
+            <span class="dm-bar-count">${val.taux}%</span>
+          </div>
+        </div>
+        <div class="dm-bar-info">${val.reponses}/${val.total}</div>
+      </div>
+    `;
+  }).join("");
+
+  // Tableau croisé
+  document.getElementById("profils-table").innerHTML = renderTable(
+    ["Tranche followers", "Leads contactés", "Réponses", "Taux de réponse"],
+    Object.entries(tranches).map(([tranche, val]) => `
+      <tr>
+        <td style="font-weight:600;">${tranche}</td>
+        <td>${val.total}</td>
+        <td>${val.reponses}</td>
+        <td><span style="color:${taux_color(val.taux)};font-weight:700;">${val.taux}%</span></td>
+      </tr>
+    `)
+  );
+}
+
 // ── Tab switch ───────────────────────────────────────────────────────────────
 
 window.switchPerfTab = function(tab) {
@@ -253,5 +325,5 @@ window.switchPerfTab = function(tab) {
 };
 
 window.initStats = async function() {
-  await Promise.all([loadDM(), loadComptes(), loadNiches(), loadTendances()]);
+  await Promise.all([loadDM(), loadComptes(), loadNiches(), loadTendances(), loadProfils()]);
 };
