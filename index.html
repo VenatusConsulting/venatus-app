@@ -21,14 +21,11 @@
 
   <div class="main-wrap">
     <div class="main-content">
-
       <div class="page-header">
         <h1>Tableau de bord</h1>
         <span id="date" class="date"></span>
       </div>
-
       <div id="objectif-day" class="card objectif-card"></div>
-
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Total leads</div>
@@ -47,7 +44,6 @@
           <div class="stat-value" id="taux">—</div>
         </div>
       </div>
-
       <div class="alerte-retard hidden" id="alerte-retard" onclick="window.location='relances.html'">
         <span>🔥</span>
         <div>
@@ -55,7 +51,6 @@
           <div class="alerte-sub">Clique pour les gérer →</div>
         </div>
       </div>
-
       <div class="grid-2">
         <div>
           <div class="section-title-wrap">⏰ Relances à faire <span id="count-relances" class="badge">0</span></div>
@@ -66,25 +61,20 @@
           <div class="card" id="list-discussion"><div class="loading">Chargement...</div></div>
         </div>
       </div>
-
       <div class="card funnel-card">
         <div class="card-header"><h2>📈 Chemin vers la première signature</h2></div>
         <div id="funnel-bars"></div>
         <div class="funnel-insight" id="funnel-insight"></div>
       </div>
-
       <div class="kpi-grid" id="kpi-grid"></div>
-
       <div class="card">
         <div class="card-header"><h2>Par statut</h2></div>
         <div class="statut-grid" id="statut-grid"></div>
       </div>
-
       <div class="card">
         <div class="card-header"><h2>Par niche</h2></div>
         <div class="niche-grid" id="niche-grid"></div>
       </div>
-
     </div>
   </div>
 
@@ -99,7 +89,13 @@
     </div>
   </div>
 
-  <script src="api.js"></script>
-  <script src="dashboard.js"></script>
+  <script type="module">
+    import { checkAuth, addSignOutButton } from "./firebase-auth.js";
+    import "./dashboard-init.js";
+    checkAuth(() => {
+      addSignOutButton();
+      window.initDashboard();
+    });
+  </script>
 </body>
 </html>
