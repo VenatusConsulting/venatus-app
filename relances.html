@@ -24,7 +24,6 @@
       <div class="page-header">
         <h1>Relances du jour</h1>
       </div>
-
       <div class="grid-2">
         <div>
           <div class="section-title-wrap">⏰ À relancer <span id="relances-count" class="badge">0</span></div>
@@ -49,7 +48,13 @@
     </div>
   </div>
 
-  <script src="api.js"></script>
-  <script src="relances.js"></script>
+  <script type="module">
+    import { checkAuth, addSignOutButton } from "./firebase-auth.js";
+    import "./relances-init.js";
+    checkAuth(() => {
+      addSignOutButton();
+      window.initRelances();
+    });
+  </script>
 </body>
 </html>
