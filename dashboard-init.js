@@ -68,6 +68,7 @@ function renderLeadRow(lead, actionLabel, actionColor) {
           <span class="lead-tag" style="color:${statut.color}">${statut.label}</span>
           ${retard ? `<span class="lead-tag" style="color:#ef5350">⚠️ ${retard}j en retard</span>` : ""}
           ${since !== null ? `<span class="lead-tag muted">⏱ ${since}j depuis contact</span>` : ""}
+          ${lead.compte_ig ? `<span class="lead-tag muted">📱 ${lead.compte_ig}</span>` : ""}
         </div>
       </div>
       <button class="action-btn" style="border-color:${actionColor};color:${actionColor}"
@@ -94,6 +95,19 @@ async function openLead(id) {
       <div class="detail-row"><span class="detail-label">Niche</span><span>${NICHES[lead.niche] || "—"}</span></div>
       <div class="detail-row"><span class="detail-label">Ajouté le</span><span>${lead.date_ajout || "—"}</span></div>
       ${lead.date_contact ? `<div class="detail-row"><span class="detail-label">Contacté le</span><span>${lead.date_contact}</span></div>` : ""}
+      ${lead.dm_utilise ? `<div class="detail-row"><span class="detail-label">DM utilisé</span><span>${lead.dm_utilise.toUpperCase()}</span></div>` : ""}
+      <div class="detail-row">
+        <span class="detail-label">Compte IG</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" id="compte-ig-input" value="${lead.compte_ig || ''}"
+            placeholder="@moncompte"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none;width:130px;">
+          <button id="save-compte-ig" onclick="window._saveCompteIg()"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;color:var(--text2);font-size:12px;cursor:pointer;">
+            Sauver
+          </button>
+        </div>
+      </div>
       ${lead.date_relance ? `<div class="detail-row"><span class="detail-label">Relance</span>
         <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
           ⏰ ${lead.date_relance}
@@ -131,6 +145,14 @@ window._saveNote = async () => {
   if (!note) return;
   await addNote(currentId, note);
   openLead(currentId);
+};
+window._saveCompteIg = async () => {
+  const val = document.getElementById("compte-ig-input").value.trim();
+  await updateLead(currentId, { compte_ig: val });
+  const btn = document.getElementById("save-compte-ig");
+  btn.textContent = "✅";
+  btn.style.color = "var(--green)";
+  setTimeout(() => { btn.textContent = "Sauver"; btn.style.color = "var(--text2)"; }, 1500);
 };
 window.closeModal = () => {
   document.getElementById("modal").classList.add("hidden");
@@ -204,13 +226,11 @@ window.initDashboard = async function() {
   const base       = contacte || 1;
   const taux       = contacte > 0 ? Math.round((discussion / contacte) * 100) : 0;
 
-  const funnelSteps = [
+  document.getElementById("funnel-bars").innerHTML = [
     { label: "Contacté",      count: contacte,   pct: 100 },
     { label: "En discussion", count: discussion, pct: Math.round((discussion / base) * 100) },
     { label: "Signé",         count: signe,      pct: Math.round((signe / base) * 100) },
-  ];
-
-  document.getElementById("funnel-bars").innerHTML = funnelSteps.map(s => `
+  ].map(s => `
     <div class="funnel-row">
       <div class="funnel-label">${s.label}</div>
       <div class="funnel-bar-wrap">
