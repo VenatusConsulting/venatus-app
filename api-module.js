@@ -28,3 +28,6 @@ export async function addNote(id, note) {
     body: JSON.stringify({ note })
   }).then(r => r.json());
 }
+export async function getStatsProfils() {
+  return fetch(`${API}/stats/profils`).then(r => r.json());
+}
