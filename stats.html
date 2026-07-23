@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Venatus — Stats DM</title>
+  <title>Venatus — Stats Performance</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
   <aside class="sidebar">
     <div class="sidebar-logo">💎 Venatus</div>
     <nav class="sidebar-nav">
@@ -15,28 +14,83 @@
       <a href="leads.html" class="sidebar-link"><span>👤</span> Leads</a>
       <a href="relances.html" class="sidebar-link"><span>⏰</span> Relances</a>
       <a href="pipeline.html" class="sidebar-link"><span>📋</span> Pipeline</a>
-      <a href="stats.html" class="sidebar-link active"><span>💬</span> Stats DM</a>
+      <a href="stats.html" class="sidebar-link active"><span>📈</span> Stats Perf</a>
     </nav>
   </aside>
 
   <div class="main-wrap">
     <div class="main-content">
       <div class="page-header">
-        <h1>Performance DM</h1>
+        <h1>Stats Performance</h1>
       </div>
-      <div class="card" id="best-dm-card"></div>
-      <div class="card">
-        <div class="card-header"><h2>Taux de réponse par DM</h2></div>
-        <div id="dm-bars"></div>
+
+      <!-- Tabs -->
+      <div class="perf-tabs">
+        <button class="perf-tab active" id="tab-dm"      onclick="switchPerfTab('dm')">💬 DM</button>
+        <button class="perf-tab"        id="tab-comptes" onclick="switchPerfTab('comptes')">📱 Comptes IG</button>
+        <button class="perf-tab"        id="tab-niches"  onclick="switchPerfTab('niches')">🏷️ Niches</button>
+        <button class="perf-tab"        id="tab-tendances" onclick="switchPerfTab('tendances')">📅 Tendances</button>
       </div>
-      <div class="card">
-        <div class="card-header"><h2>Détail par DM</h2></div>
-        <div id="dm-table"></div>
+
+      <!-- Panel DM -->
+      <div class="perf-panel active" id="panel-dm">
+        <div class="card" id="best-dm-card"></div>
+        <div class="card">
+          <div class="card-header"><h2>Taux de réponse par DM</h2></div>
+          <div id="dm-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Tableau détaillé</h2></div>
+          <div id="dm-table"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>📝 Tes templates</h2></div>
+          <div id="dm-templates"></div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-header"><h2>📝 Tes templates</h2></div>
-        <div id="dm-templates"></div>
+
+      <!-- Panel Comptes IG -->
+      <div class="perf-panel" id="panel-comptes">
+        <div class="card" id="best-compte-card"></div>
+        <div class="card">
+          <div class="card-header"><h2>Performance par compte IG</h2></div>
+          <div id="comptes-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Tableau détaillé</h2></div>
+          <div id="comptes-table"></div>
+        </div>
       </div>
+
+      <!-- Panel Niches -->
+      <div class="perf-panel" id="panel-niches">
+        <div class="card" id="best-niche-card"></div>
+        <div class="card">
+          <div class="card-header"><h2>Performance par niche</h2></div>
+          <div id="niches-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Tableau détaillé</h2></div>
+          <div id="niches-table"></div>
+        </div>
+      </div>
+
+      <!-- Panel Tendances -->
+      <div class="perf-panel" id="panel-tendances">
+        <div class="card">
+          <div class="card-header"><h2>📅 Leads ajoutés par semaine</h2></div>
+          <div id="tendances-ajouts"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>📈 Taux de réponse par semaine</h2></div>
+          <div id="tendances-taux"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Tableau semaine par semaine</h2></div>
+          <div id="tendances-table"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
