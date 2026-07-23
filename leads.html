@@ -25,7 +25,6 @@
         <h1>Leads</h1>
         <span id="leads-total" class="badge">—</span>
       </div>
-
       <div class="filters">
         <input type="text" id="search" placeholder="🔍 Rechercher un pseudo..." class="search-input">
         <select id="filter-statut" class="filter-select">
@@ -45,7 +44,6 @@
           <option value="cosplay">🎨 Cosplay</option>
         </select>
       </div>
-
       <div class="card">
         <div id="leads-list" class="leads-list">
           <div class="loading">Chargement...</div>
@@ -70,7 +68,13 @@
     </div>
   </div>
 
-  <script src="api.js"></script>
-  <script src="leads.js"></script>
+  <script type="module">
+    import { checkAuth, addSignOutButton } from "./firebase-auth.js";
+    import "./leads-init.js";
+    checkAuth(() => {
+      addSignOutButton();
+      window.initLeads();
+    });
+  </script>
 </body>
 </html>
