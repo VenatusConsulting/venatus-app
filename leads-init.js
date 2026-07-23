@@ -25,8 +25,8 @@ function getRetard(dateRelance) {
   const relance   = new Date(y, m - 1, d);
   const today     = new Date();
   today.setHours(0, 0, 0, 0);
-  return Math.floor((today - relance) / (1000 * 60 * 60 * 24)) > 0
-    ? Math.floor((today - relance) / (1000 * 60 * 60 * 24)) : null;
+  const diff = Math.floor((today - relance) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? diff : null;
 }
 
 function getFilters() {
@@ -62,6 +62,7 @@ function renderLeads(list) {
           <div class="lead-meta">
             ${n ? `<span class="tag">${n}</span>` : ""}
             ${lead.abonnes ? `<span class="tag">👥 ${lead.abonnes}</span>` : ""}
+            ${lead.compte_ig ? `<span class="tag">📱 ${lead.compte_ig}</span>` : ""}
             ${retard ? `<span class="tag retard-tag">⚠️ ${retard}j de retard</span>`
               : lead.date_relance ? `<span class="tag">⏰ ${lead.date_relance}</span>` : ""}
           </div>
@@ -95,12 +96,24 @@ async function openLead(id) {
       <div class="detail-row"><span class="detail-label">Niche</span><span>${NICHES[lead.niche] || "—"}</span></div>
       <div class="detail-row"><span class="detail-label">Ajouté le</span><span>${lead.date_ajout || "—"}</span></div>
       ${lead.date_contact ? `<div class="detail-row"><span class="detail-label">Contacté le</span><span>${lead.date_contact}</span></div>` : ""}
+      ${lead.dm_utilise ? `<div class="detail-row"><span class="detail-label">DM utilisé</span><span>${lead.dm_utilise.toUpperCase()}</span></div>` : ""}
+      <div class="detail-row">
+        <span class="detail-label">Compte IG</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" id="compte-ig-input" value="${lead.compte_ig || ''}"
+            placeholder="@moncompte"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none;width:130px;">
+          <button id="save-compte-ig" onclick="window._saveCompteIg()"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;color:var(--text2);font-size:12px;cursor:pointer;">
+            Sauver
+          </button>
+        </div>
+      </div>
       ${lead.date_relance ? `<div class="detail-row"><span class="detail-label">Relance</span>
         <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
           ⏰ ${lead.date_relance}
           ${retard ? `<span class="retard-inline">⚠️ ${retard}j de retard</span>` : ""}
         </span></div>` : ""}
-      ${lead.dm_utilise ? `<div class="detail-row"><span class="detail-label">DM utilisé</span><span>${lead.dm_utilise.toUpperCase()}</span></div>` : ""}
       ${lead.notes ? `<div class="detail-row notes"><span class="detail-label">Notes</span><span>${lead.notes}</span></div>` : ""}
     </div>
     <div class="modal-section">
@@ -133,6 +146,14 @@ window._saveNoteL = async () => {
   if (!note) return;
   await addNote(currentId, note);
   openLead(currentId);
+};
+window._saveCompteIg = async () => {
+  const val = document.getElementById("compte-ig-input").value.trim();
+  await updateLead(currentId, { compte_ig: val });
+  const btn = document.getElementById("save-compte-ig");
+  btn.textContent = "✅";
+  btn.style.color = "var(--green)";
+  setTimeout(() => { btn.textContent = "Sauver"; btn.style.color = "var(--text2)"; }, 1500);
 };
 window.closeModal = () => {
   document.getElementById("modal").classList.add("hidden");
