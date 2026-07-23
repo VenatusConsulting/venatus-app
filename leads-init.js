@@ -1,5 +1,7 @@
 import { getLeads, getLead, updateLead, addNote } from "./api-module.js";
 
+const API = "https://venatus-api.onrender.com";
+
 const STATUTS = {
   nouveau:       { label: "🆕 Nouveau",       color: "#667eea" },
   contacte:      { label: "📨 Contacté",      color: "#ffeb3b" },
@@ -18,6 +20,14 @@ const NICHES = {
 
 let page = 0, total = 0, currentId = null, debounce = null;
 const LIMIT = 20;
+
+async function getComptesIG() {
+  try {
+    const res  = await fetch(`${API}/comptes-ig`);
+    if (!res.ok) return ["@Popsy.Mel", "@Ceo.Maxime"];
+    return res.json();
+  } catch { return ["@Popsy.Mel", "@Ceo.Maxime"]; }
+}
 
 function getRetard(dateRelance) {
   if (!dateRelance) return null;
@@ -86,6 +96,13 @@ async function openLead(id) {
   const s    = STATUTS[lead.statut] || STATUTS.nouveau;
   const retard = getRetard(lead.date_relance);
 
+  // Récupère les comptes IG dispo depuis MongoDB via le bot
+  // On utilise une liste statique + l'existant du lead
+  const comptesBase = ["@Popsy.Mel", "@Ceo.Maxime"];
+  if (lead.compte_ig && !comptesBase.includes(lead.compte_ig)) {
+    comptesBase.push(lead.compte_ig);
+  }
+
   document.getElementById("modal-pseudo").textContent = lead.pseudo;
   document.getElementById("modal").classList.remove("hidden");
   document.getElementById("modal-body").innerHTML = `
@@ -99,15 +116,22 @@ async function openLead(id) {
       ${lead.dm_utilise ? `<div class="detail-row"><span class="detail-label">DM utilisé</span><span>${lead.dm_utilise.toUpperCase()}</span></div>` : ""}
       <div class="detail-row">
         <span class="detail-label">Compte IG</span>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <input type="text" id="compte-ig-input" value="${lead.compte_ig || ''}"
-            placeholder="@moncompte"
-            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none;width:130px;">
+        <div style="display:flex;gap:6px;align-items:center;flex:1;justify-content:flex-end;">
+          <select id="compte-ig-select"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none;cursor:pointer;">
+            <option value="">— Choisir —</option>
+            ${comptesBase.map(c => `<option value="${c}" ${lead.compte_ig === c ? 'selected' : ''}>${c}</option>`).join("")}
+            <option value="__nouveau__">➕ Nouveau compte...</option>
+          </select>
           <button id="save-compte-ig" onclick="window._saveCompteIg()"
             style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;color:var(--text2);font-size:12px;cursor:pointer;">
             Sauver
           </button>
         </div>
+      </div>
+      <div id="nouveau-compte-wrap" style="display:none;margin-top:6px;">
+        <input type="text" id="nouveau-compte-input" placeholder="@NouveauCompte"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;">
       </div>
       ${lead.date_relance ? `<div class="detail-row"><span class="detail-label">Relance</span>
         <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
@@ -133,6 +157,12 @@ async function openLead(id) {
       </div>
     </div>
   `;
+
+  // Affiche le champ texte si "Nouveau compte" sélectionné
+  document.getElementById("compte-ig-select").addEventListener("change", (e) => {
+    const wrap = document.getElementById("nouveau-compte-wrap");
+    wrap.style.display = e.target.value === "__nouveau__" ? "block" : "none";
+  });
 }
 
 window._openLeadL = openLead;
@@ -148,12 +178,22 @@ window._saveNoteL = async () => {
   openLead(currentId);
 };
 window._saveCompteIg = async () => {
-  const val = document.getElementById("compte-ig-input").value.trim();
+  const select = document.getElementById("compte-ig-select");
+  let val = select.value;
+
+  if (val === "__nouveau__") {
+    val = document.getElementById("nouveau-compte-input").value.trim();
+    if (!val) return;
+    if (!val.startsWith("@")) val = "@" + val;
+  }
+
+  if (!val) return;
+
   await updateLead(currentId, { compte_ig: val });
   const btn = document.getElementById("save-compte-ig");
   btn.textContent = "✅";
   btn.style.color = "var(--green)";
-  setTimeout(() => { btn.textContent = "Sauver"; btn.style.color = "var(--text2)"; }, 1500);
+  setTimeout(() => { btn.textContent = "Sauver"; btn.style.color = "var(--text2)"; openLead(currentId); }, 1200);
 };
 window.closeModal = () => {
   document.getElementById("modal").classList.add("hidden");
