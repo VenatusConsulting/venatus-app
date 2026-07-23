@@ -20,74 +20,59 @@
 
   <div class="main-wrap">
     <div class="main-content">
-      <div class="page-header">
-        <h1>Stats Performance</h1>
-      </div>
+      <div class="page-header"><h1>Stats Performance</h1></div>
 
-      <!-- Tabs -->
       <div class="perf-tabs">
-        <button class="perf-tab active" id="tab-dm"      onclick="switchPerfTab('dm')">💬 DM</button>
-        <button class="perf-tab"        id="tab-comptes" onclick="switchPerfTab('comptes')">📱 Comptes IG</button>
-        <button class="perf-tab"        id="tab-niches"  onclick="switchPerfTab('niches')">🏷️ Niches</button>
+        <button class="perf-tab active" id="tab-dm"       onclick="switchPerfTab('dm')">💬 DM</button>
+        <button class="perf-tab"        id="tab-comptes"  onclick="switchPerfTab('comptes')">📱 Comptes IG</button>
+        <button class="perf-tab"        id="tab-niches"   onclick="switchPerfTab('niches')">🏷️ Niches</button>
         <button class="perf-tab"        id="tab-tendances" onclick="switchPerfTab('tendances')">📅 Tendances</button>
+        <button class="perf-tab"        id="tab-profils"  onclick="switchPerfTab('profils')">👥 Profils</button>
       </div>
 
-      <!-- Panel DM -->
+      <!-- DM -->
       <div class="perf-panel active" id="panel-dm">
         <div class="card" id="best-dm-card"></div>
-        <div class="card">
-          <div class="card-header"><h2>Taux de réponse par DM</h2></div>
-          <div id="dm-bars"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>Tableau détaillé</h2></div>
-          <div id="dm-table"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>📝 Tes templates</h2></div>
-          <div id="dm-templates"></div>
-        </div>
+        <div class="card"><div class="card-header"><h2>Taux de réponse par DM</h2></div><div id="dm-bars"></div></div>
+        <div class="card"><div class="card-header"><h2>Tableau détaillé</h2></div><div id="dm-table"></div></div>
+        <div class="card"><div class="card-header"><h2>📝 Tes templates</h2></div><div id="dm-templates"></div></div>
       </div>
 
-      <!-- Panel Comptes IG -->
+      <!-- Comptes IG -->
       <div class="perf-panel" id="panel-comptes">
         <div class="card" id="best-compte-card"></div>
-        <div class="card">
-          <div class="card-header"><h2>Performance par compte IG</h2></div>
-          <div id="comptes-bars"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>Tableau détaillé</h2></div>
-          <div id="comptes-table"></div>
-        </div>
+        <div class="card"><div class="card-header"><h2>Performance par compte IG</h2></div><div id="comptes-bars"></div></div>
+        <div class="card"><div class="card-header"><h2>Tableau détaillé</h2></div><div id="comptes-table"></div></div>
       </div>
 
-      <!-- Panel Niches -->
+      <!-- Niches -->
       <div class="perf-panel" id="panel-niches">
         <div class="card" id="best-niche-card"></div>
-        <div class="card">
-          <div class="card-header"><h2>Performance par niche</h2></div>
-          <div id="niches-bars"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>Tableau détaillé</h2></div>
-          <div id="niches-table"></div>
-        </div>
+        <div class="card"><div class="card-header"><h2>Performance par niche</h2></div><div id="niches-bars"></div></div>
+        <div class="card"><div class="card-header"><h2>Tableau détaillé</h2></div><div id="niches-table"></div></div>
       </div>
 
-      <!-- Panel Tendances -->
+      <!-- Tendances -->
       <div class="perf-panel" id="panel-tendances">
+        <div class="card"><div class="card-header"><h2>📅 Leads ajoutés par semaine</h2></div><div id="tendances-ajouts"></div></div>
+        <div class="card"><div class="card-header"><h2>📈 Taux de réponse par semaine</h2></div><div id="tendances-taux"></div></div>
+        <div class="card"><div class="card-header"><h2>Tableau semaine par semaine</h2></div><div id="tendances-table"></div></div>
+      </div>
+
+      <!-- Profils -->
+      <div class="perf-panel" id="panel-profils">
         <div class="card">
-          <div class="card-header"><h2>📅 Leads ajoutés par semaine</h2></div>
-          <div id="tendances-ajouts"></div>
+          <div class="card-header"><h2>🔍 Insight clé</h2></div>
+          <div id="profils-insight" style="font-size:14px;color:var(--text2);line-height:1.7;"></div>
+        </div>
+        <div class="kpi-grid" id="profils-kpis"></div>
+        <div class="card">
+          <div class="card-header"><h2>📊 Taux de réponse par tranche de followers</h2></div>
+          <div id="profils-tranches"></div>
         </div>
         <div class="card">
-          <div class="card-header"><h2>📈 Taux de réponse par semaine</h2></div>
-          <div id="tendances-taux"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>Tableau semaine par semaine</h2></div>
-          <div id="tendances-table"></div>
+          <div class="card-header"><h2>Tableau croisé par tranche</h2></div>
+          <div id="profils-table"></div>
         </div>
       </div>
 
