@@ -42,7 +42,13 @@
     </div>
   </div>
 
-  <script src="api.js"></script>
-  <script src="pipeline.js"></script>
+  <script type="module">
+    import { checkAuth, addSignOutButton } from "./firebase-auth.js";
+    import "./pipeline-init.js";
+    checkAuth(() => {
+      addSignOutButton();
+      window.initPipeline();
+    });
+  </script>
 </body>
 </html>
