@@ -178,10 +178,9 @@ function showComptePopup(onConfirm) {
 
 function showHeureReponsePopup(onConfirm) {
   removePopup();
-  const now    = new Date();
-  const hh     = String(now.getHours()).padStart(2, "0");
-  const mm     = String(now.getMinutes()).padStart(2, "0");
-  const defaut = `${hh}:${mm}`;
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2, "0");
+  const mm  = String(now.getMinutes()).padStart(2, "0");
 
   const popup = document.createElement("div");
   popup.id = "action-popup";
@@ -202,24 +201,38 @@ function showHeureReponsePopup(onConfirm) {
         background:#0f0f1e;border:1px solid #2a2a45;border-radius:12px;
         padding:20px;text-align:center;margin-bottom:8px;
       ">
-        <div style="font-size:11px;color:#555;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">Heure de réponse</div>
-        <input
-          type="text"
-          id="heure-rep-input"
-          value="${defaut}"
-          placeholder="ex: 14:30"
-          maxlength="5"
-          style="
-            background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
-            padding:12px;color:#e0e0ff;font-size:32px;font-weight:700;
-            text-align:center;outline:none;width:140px;
-            box-sizing:border-box;letter-spacing:4px;
-          "
-        >
+        <div style="font-size:11px;color:#555;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px;">Heure de réponse</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+          <input
+            type="number"
+            id="input-hh"
+            value="${hh}"
+            min="0" max="23"
+            style="
+              background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
+              padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;
+              text-align:center;outline:none;width:72px;
+              -moz-appearance:textfield;
+            "
+          >
+          <span style="font-size:32px;font-weight:700;color:#667eea;line-height:1;">:</span>
+          <input
+            type="number"
+            id="input-mm"
+            value="${mm}"
+            min="0" max="59"
+            style="
+              background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
+              padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;
+              text-align:center;outline:none;width:72px;
+              -moz-appearance:textfield;
+            "
+          >
+        </div>
       </div>
 
       <div style="font-size:11px;color:#444;text-align:center;margin-bottom:20px;">
-        Pré-rempli avec l'heure actuelle (${defaut}) — modifie si besoin
+        Pré-rempli avec l'heure actuelle — modifie si besoin
       </div>
 
       <div style="display:flex;gap:8px;">
@@ -236,23 +249,39 @@ function showHeureReponsePopup(onConfirm) {
   `;
   document.body.appendChild(popup);
 
-  // Format automatique HH:MM pendant la saisie
-  const input = document.getElementById("heure-rep-input");
-  input.addEventListener("input", () => {
-    let val = input.value.replace(/[^0-9]/g, "");
-    if (val.length > 2) val = val.slice(0, 2) + ":" + val.slice(2, 4);
-    input.value = val;
+  const inputHH = document.getElementById("input-hh");
+  const inputMM = document.getElementById("input-mm");
+
+  // Auto-format : max 2 chiffres, range correct
+  inputHH.addEventListener("input", () => {
+    let v = parseInt(inputHH.value);
+    if (isNaN(v)) return;
+    if (v > 23) inputHH.value = 23;
+    if (v < 0)  inputHH.value = 0;
+  });
+
+  inputMM.addEventListener("input", () => {
+    let v = parseInt(inputMM.value);
+    if (isNaN(v)) return;
+    if (v > 59) inputMM.value = 59;
+    if (v < 0)  inputMM.value = 0;
+  });
+
+  // Passe aux minutes automatiquement après 2 chiffres
+  inputHH.addEventListener("keyup", (e) => {
+    if (inputHH.value.length >= 2 && e.key !== "Backspace") {
+      inputMM.focus();
+      inputMM.select();
+    }
   });
 
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
+
   document.getElementById("popup-confirm").addEventListener("click", () => {
-    const val = input.value.trim();
-    if (!val || !val.match(/^\d{2}:\d{2}$/)) {
-      input.style.borderColor = "#ef5350";
-      return;
-    }
+    const h = String(parseInt(inputHH.value) || 0).padStart(2, "0");
+    const m = String(parseInt(inputMM.value) || 0).padStart(2, "0");
     removePopup();
-    onConfirm(val);
+    onConfirm(`${h}:${m}`);
   });
 }
 async function openLead(id) {
