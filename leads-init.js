@@ -16,11 +16,19 @@ const NICHES = {
   cosplay:      "🎨 Cosplay",
 };
 
+const SOURCES = {
+  dork:                  "🔍 Google Dorking",
+  instagram_abonnements: "👥 Instagram Abonnements",
+  instagram_reels:       "🎬 Instagram Reels",
+  tiktok:                "🎵 TikTok",
+  manuel:                "✋ Manuel",
+};
+
 const DM_TEMPLATES = {
-  dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗",              color: "#667eea" },
+  dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗",               color: "#667eea" },
   dm2: { label: "DM 2 — Girl energy",          text: "idk why but you just have THAT girl energy 💅✨", color: "#f59e0b" },
   dm3: { label: "DM 3 — Feed + question",      text: "I love your feed 😍 how long have you been posting?", color: "#10b981" },
-  dm4: { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀",        color: "#ec4899" },
+  dm4: { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀",         color: "#ec4899" },
 };
 
 const COMPTES_IG = ["@Popsy.Mel", "@Ceo.Maxime"];
@@ -69,13 +77,15 @@ function renderLeads(list) {
   el.innerHTML = list.map(lead => {
     const s      = STATUTS[lead.statut] || STATUTS.nouveau;
     const n      = NICHES[lead.niche] || "";
+    const src    = SOURCES[lead.source] || "";
     const retard = getRetard(lead.date_relance);
     return `
       <div class="lead-row" onclick="window._openLeadL('${lead._id}')">
         <div class="lead-main">
           <div class="lead-pseudo">${lead.pseudo}</div>
           <div class="lead-meta">
-            ${n ? `<span class="tag">${n}</span>` : ""}
+            ${n   ? `<span class="tag">${n}</span>` : ""}
+            ${src ? `<span class="tag" style="color:var(--text3)">${src}</span>` : ""}
             ${lead.abonnes   ? `<span class="tag">👥 ${lead.abonnes}</span>` : ""}
             ${lead.compte_ig ? `<span class="tag">📱 ${lead.compte_ig}</span>` : ""}
             ${lead.nb_relances > 0 ? `<span class="tag">🔁 ${lead.nb_relances} relance${lead.nb_relances > 1 ? "s" : ""}</span>` : ""}
@@ -102,74 +112,40 @@ function removePopup() {
   if (p) p.remove();
 }
 
-// ── Popup choix compte IG ────────────────────────────────────────────────────
-
 function showComptePopup(onConfirm) {
   removePopup();
   const popup = document.createElement("div");
   popup.id = "action-popup";
-  popup.style.cssText = `
-    position:fixed;inset:0;z-index:2000;
-    display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
-  `;
+  popup.style.cssText = `position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);`;
   popup.innerHTML = `
     <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;padding:28px;width:340px;max-width:90%;">
       <div style="font-size:16px;font-weight:700;color:#e0e0ff;margin-bottom:4px;">📱 Depuis quel compte ?</div>
       <div style="font-size:12px;color:#555;margin-bottom:20px;">Choisis le compte Instagram utilisé pour ce DM</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
         ${COMPTES_IG.map(c => `
-          <button data-compte="${c}" class="popup-compte-btn" style="
-            background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-            padding:10px 16px;color:#e0e0ff;font-size:14px;font-weight:600;
-            cursor:pointer;text-align:left;transition:all 0.2s;
-          ">${c}</button>
+          <button data-compte="${c}" class="popup-compte-btn" style="background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;padding:10px 16px;color:#e0e0ff;font-size:14px;font-weight:600;cursor:pointer;text-align:left;">${c}</button>
         `).join("")}
-        <button data-compte="__autre__" class="popup-compte-btn" style="
-          background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-          padding:10px 16px;color:#555;font-size:13px;cursor:pointer;text-align:left;
-        ">➕ Autre compte...</button>
+        <button data-compte="__autre__" class="popup-compte-btn" style="background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;padding:10px 16px;color:#555;font-size:13px;cursor:pointer;text-align:left;">➕ Autre compte...</button>
       </div>
       <div id="autre-wrap" style="display:none;margin-bottom:12px;">
-        <input type="text" id="autre-input" placeholder="@NouveauCompte" style="
-          width:100%;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-          padding:8px 12px;color:#e0e0ff;font-size:13px;outline:none;box-sizing:border-box;
-        ">
+        <input type="text" id="autre-input" placeholder="@NouveauCompte" style="width:100%;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;padding:8px 12px;color:#e0e0ff;font-size:13px;outline:none;box-sizing:border-box;">
       </div>
       <div style="display:flex;gap:8px;">
-        <button id="popup-cancel" style="
-          flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-          padding:9px;color:#555;font-size:13px;cursor:pointer;
-        ">Annuler</button>
-        <button id="popup-confirm" style="
-          flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;
-          border-radius:8px;padding:9px;color:white;font-size:13px;font-weight:700;cursor:pointer;
-        ">Suivant →</button>
+        <button id="popup-cancel" style="flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;padding:9px;color:#555;font-size:13px;cursor:pointer;">Annuler</button>
+        <button id="popup-confirm" style="flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:8px;padding:9px;color:white;font-size:13px;font-weight:700;cursor:pointer;">Suivant →</button>
       </div>
     </div>
   `;
   document.body.appendChild(popup);
-
   let selected = null;
-
   popup.querySelectorAll(".popup-compte-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      popup.querySelectorAll(".popup-compte-btn").forEach(b => {
-        b.style.borderColor = "#2a2a45";
-        b.style.color = b.dataset.compte === "__autre__" ? "#555" : "#e0e0ff";
-      });
-      if (btn.dataset.compte === "__autre__") {
-        document.getElementById("autre-wrap").style.display = "block";
-        selected = "__autre__";
-      } else {
-        document.getElementById("autre-wrap").style.display = "none";
-        selected = btn.dataset.compte;
-      }
-      btn.style.borderColor = "#667eea";
-      btn.style.color = "#667eea";
+      popup.querySelectorAll(".popup-compte-btn").forEach(b => { b.style.borderColor = "#2a2a45"; b.style.color = b.dataset.compte === "__autre__" ? "#555" : "#e0e0ff"; });
+      if (btn.dataset.compte === "__autre__") { document.getElementById("autre-wrap").style.display = "block"; selected = "__autre__"; }
+      else { document.getElementById("autre-wrap").style.display = "none"; selected = btn.dataset.compte; }
+      btn.style.borderColor = "#667eea"; btn.style.color = "#667eea";
     });
   });
-
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
   document.getElementById("popup-confirm").addEventListener("click", () => {
     let compte = selected;
@@ -185,86 +161,48 @@ function showComptePopup(onConfirm) {
   });
 }
 
-// ── Popup choix DM ───────────────────────────────────────────────────────────
-
 function showDMPopup(pseudo, onConfirm) {
   removePopup();
   const popup = document.createElement("div");
   popup.id = "action-popup";
-  popup.style.cssText = `
-    position:fixed;inset:0;z-index:2000;
-    display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
-  `;
+  popup.style.cssText = `position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);`;
   popup.innerHTML = `
     <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;padding:28px;width:380px;max-width:90%;">
       <div style="font-size:16px;font-weight:700;color:#e0e0ff;margin-bottom:4px;">💬 Quel DM envoies-tu ?</div>
       <div style="font-size:12px;color:#555;margin-bottom:20px;">Choisis le template — il sera copié automatiquement</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
         ${Object.entries(DM_TEMPLATES).map(([key, dm]) => `
-          <button data-dm="${key}" class="popup-dm-btn" style="
-            background:#0f0f1e;border:1px solid #2a2a45;border-radius:10px;
-            padding:12px 16px;color:#e0e0ff;font-size:13px;
-            cursor:pointer;text-align:left;transition:all 0.2s;
-          ">
+          <button data-dm="${key}" class="popup-dm-btn" style="background:#0f0f1e;border:1px solid #2a2a45;border-radius:10px;padding:12px 16px;color:#e0e0ff;font-size:13px;cursor:pointer;text-align:left;">
             <div style="font-weight:600;color:${dm.color};margin-bottom:4px;">${dm.label}</div>
             <div style="font-size:12px;color:#555;font-style:italic;">"${dm.text}"</div>
           </button>
         `).join("")}
       </div>
-      <div id="dm-preview" style="
-        display:none;
-        background:#0f0f1e;border:1px solid #2a2a45;border-radius:10px;
-        padding:14px 16px;margin-bottom:16px;
-      ">
+      <div id="dm-preview" style="display:none;background:#0f0f1e;border:1px solid #2a2a45;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
         <div style="font-size:11px;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">📋 Message à copier</div>
         <div id="dm-preview-text" style="font-size:15px;color:#e0e0ff;font-weight:500;"></div>
-        <button id="copy-dm-btn" style="
-          margin-top:10px;background:rgba(102,126,234,0.15);border:1px solid rgba(102,126,234,0.4);
-          border-radius:6px;padding:6px 14px;color:#667eea;font-size:12px;font-weight:600;cursor:pointer;
-        ">📋 Copier</button>
+        <button id="copy-dm-btn" style="margin-top:10px;background:rgba(102,126,234,0.15);border:1px solid rgba(102,126,234,0.4);border-radius:6px;padding:6px 14px;color:#667eea;font-size:12px;font-weight:600;cursor:pointer;">📋 Copier</button>
       </div>
       <div style="display:flex;gap:8px;">
-        <button id="popup-cancel" style="
-          flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-          padding:11px;color:#555;font-size:13px;cursor:pointer;
-        ">Annuler</button>
-        <button id="popup-confirm" style="
-          flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;
-          border-radius:8px;padding:11px;color:white;font-size:13px;font-weight:700;
-          cursor:pointer;opacity:0.4;pointer-events:none;
-        " disabled>✅ Confirmer contacté</button>
+        <button id="popup-cancel" style="flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;padding:11px;color:#555;font-size:13px;cursor:pointer;">Annuler</button>
+        <button id="popup-confirm" style="flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:8px;padding:11px;color:white;font-size:13px;font-weight:700;cursor:pointer;opacity:0.4;pointer-events:none;" disabled>✅ Confirmer contacté</button>
       </div>
     </div>
   `;
   document.body.appendChild(popup);
-
   let selectedDM = null;
-
   popup.querySelectorAll(".popup-dm-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      popup.querySelectorAll(".popup-dm-btn").forEach(b => {
-        b.style.borderColor = "#2a2a45";
-        b.style.background  = "#0f0f1e";
-      });
+      popup.querySelectorAll(".popup-dm-btn").forEach(b => { b.style.borderColor = "#2a2a45"; b.style.background = "#0f0f1e"; });
       btn.style.borderColor = DM_TEMPLATES[btn.dataset.dm].color;
       btn.style.background  = `${DM_TEMPLATES[btn.dataset.dm].color}18`;
       selectedDM = btn.dataset.dm;
-
-      // Affiche preview
-      const preview = document.getElementById("dm-preview");
-      const previewText = document.getElementById("dm-preview-text");
-      preview.style.display    = "block";
-      previewText.textContent  = DM_TEMPLATES[selectedDM].text;
-
-      // Active le bouton confirmer
+      document.getElementById("dm-preview").style.display = "block";
+      document.getElementById("dm-preview-text").textContent = DM_TEMPLATES[selectedDM].text;
       const confirm = document.getElementById("popup-confirm");
-      confirm.disabled             = false;
-      confirm.style.opacity        = "1";
-      confirm.style.pointerEvents  = "auto";
+      confirm.disabled = false; confirm.style.opacity = "1"; confirm.style.pointerEvents = "auto";
     });
   });
-
   document.getElementById("copy-dm-btn")?.addEventListener("click", () => {
     if (!selectedDM) return;
     navigator.clipboard.writeText(DM_TEMPLATES[selectedDM].text).then(() => {
@@ -272,7 +210,6 @@ function showDMPopup(pseudo, onConfirm) {
       if (btn) { btn.textContent = "✅ Copié !"; setTimeout(() => { btn.textContent = "📋 Copier"; }, 1500); }
     });
   });
-
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
   document.getElementById("popup-confirm").addEventListener("click", () => {
     if (!selectedDM) return;
@@ -281,85 +218,39 @@ function showDMPopup(pseudo, onConfirm) {
   });
 }
 
-// ── Popup heure de réponse ───────────────────────────────────────────────────
-
 function showHeureReponsePopup(onConfirm) {
   removePopup();
-  const now    = new Date();
-  const hh     = String(now.getHours()).padStart(2, "0");
-  const mm     = String(now.getMinutes()).padStart(2, "0");
-
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2, "0");
+  const mm  = String(now.getMinutes()).padStart(2, "0");
   const popup = document.createElement("div");
   popup.id = "action-popup";
-  popup.style.cssText = `
-    position:fixed;inset:0;z-index:2000;
-    display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
-  `;
+  popup.style.cssText = `position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);`;
   popup.innerHTML = `
-    <div style="
-      background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;
-      padding:28px;width:340px;max-width:90%;
-    ">
+    <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;padding:28px;width:340px;max-width:90%;">
       <div style="font-size:16px;font-weight:700;color:#e0e0ff;margin-bottom:4px;">💬 Elle a répondu !</div>
       <div style="font-size:12px;color:#555;margin-bottom:24px;">À quelle heure elle t'a répondu sur Instagram ?</div>
-      <div style="
-        background:#0f0f1e;border:1px solid #2a2a45;border-radius:12px;
-        padding:20px;text-align:center;margin-bottom:8px;
-      ">
+      <div style="background:#0f0f1e;border:1px solid #2a2a45;border-radius:12px;padding:20px;text-align:center;margin-bottom:8px;">
         <div style="font-size:11px;color:#555;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px;">Heure de réponse</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
-          <input type="number" id="input-hh" value="${hh}" min="0" max="23" style="
-            background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
-            padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;
-            text-align:center;outline:none;width:72px;-moz-appearance:textfield;
-          ">
+          <input type="number" id="input-hh" value="${hh}" min="0" max="23" style="background:#1a1a2e;border:1px solid #667eea;border-radius:8px;padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;text-align:center;outline:none;width:72px;-moz-appearance:textfield;">
           <span style="font-size:32px;font-weight:700;color:#667eea;line-height:1;">:</span>
-          <input type="number" id="input-mm" value="${mm}" min="0" max="59" style="
-            background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
-            padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;
-            text-align:center;outline:none;width:72px;-moz-appearance:textfield;
-          ">
+          <input type="number" id="input-mm" value="${mm}" min="0" max="59" style="background:#1a1a2e;border:1px solid #667eea;border-radius:8px;padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;text-align:center;outline:none;width:72px;-moz-appearance:textfield;">
         </div>
       </div>
-      <div style="font-size:11px;color:#444;text-align:center;margin-bottom:20px;">
-        Pré-rempli avec l'heure actuelle — modifie si besoin
-      </div>
+      <div style="font-size:11px;color:#444;text-align:center;margin-bottom:20px;">Pré-rempli avec l'heure actuelle — modifie si besoin</div>
       <div style="display:flex;gap:8px;">
-        <button id="popup-cancel" style="
-          flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-          padding:11px;color:#555;font-size:13px;cursor:pointer;
-        ">Annuler</button>
-        <button id="popup-confirm" style="
-          flex:2;background:linear-gradient(135deg,#29b6f6,#0288d1);border:none;
-          border-radius:8px;padding:11px;color:white;font-size:13px;font-weight:700;cursor:pointer;
-        ">✅ Confirmer en discussion</button>
+        <button id="popup-cancel" style="flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;padding:11px;color:#555;font-size:13px;cursor:pointer;">Annuler</button>
+        <button id="popup-confirm" style="flex:2;background:linear-gradient(135deg,#29b6f6,#0288d1);border:none;border-radius:8px;padding:11px;color:white;font-size:13px;font-weight:700;cursor:pointer;">✅ Confirmer en discussion</button>
       </div>
     </div>
   `;
   document.body.appendChild(popup);
-
   const inputHH = document.getElementById("input-hh");
   const inputMM = document.getElementById("input-mm");
-
-  inputHH.addEventListener("input", () => {
-    let v = parseInt(inputHH.value);
-    if (isNaN(v)) return;
-    if (v > 23) inputHH.value = 23;
-    if (v < 0)  inputHH.value = 0;
-  });
-  inputMM.addEventListener("input", () => {
-    let v = parseInt(inputMM.value);
-    if (isNaN(v)) return;
-    if (v > 59) inputMM.value = 59;
-    if (v < 0)  inputMM.value = 0;
-  });
-  inputHH.addEventListener("keyup", (e) => {
-    if (inputHH.value.length >= 2 && e.key !== "Backspace") {
-      inputMM.focus(); inputMM.select();
-    }
-  });
-
+  inputHH.addEventListener("input", () => { let v = parseInt(inputHH.value); if (isNaN(v)) return; if (v > 23) inputHH.value = 23; if (v < 0) inputHH.value = 0; });
+  inputMM.addEventListener("input", () => { let v = parseInt(inputMM.value); if (isNaN(v)) return; if (v > 59) inputMM.value = 59; if (v < 0) inputMM.value = 0; });
+  inputHH.addEventListener("keyup", (e) => { if (inputHH.value.length >= 2 && e.key !== "Backspace") { inputMM.focus(); inputMM.select(); } });
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
   document.getElementById("popup-confirm").addEventListener("click", () => {
     const h = String(parseInt(inputHH.value) || 0).padStart(2, "0");
@@ -369,104 +260,58 @@ function showHeureReponsePopup(onConfirm) {
   });
 }
 
-// ── Modal lead ───────────────────────────────────────────────────────────────
-
 async function openLead(id) {
   currentId    = id;
   const lead   = await getLead(id);
   const s      = STATUTS[lead.statut] || STATUTS.nouveau;
   const retard = getRetard(lead.date_relance);
   const heureDM = lead.heure_dm || extractHeure(lead.date_contact);
-
   const comptesBase = [...COMPTES_IG];
-  if (lead.compte_ig && !comptesBase.includes(lead.compte_ig)) {
-    comptesBase.push(lead.compte_ig);
-  }
+  if (lead.compte_ig && !comptesBase.includes(lead.compte_ig)) comptesBase.push(lead.compte_ig);
 
   document.getElementById("modal-pseudo").textContent = lead.pseudo;
   document.getElementById("modal").classList.remove("hidden");
   document.getElementById("modal-body").innerHTML = `
     <div class="lead-detail">
-      <div class="detail-row">
-        <span class="detail-label">Statut</span>
-        <span style="color:${s.color}">${s.label}</span>
+      <div class="detail-row"><span class="detail-label">Statut</span><span style="color:${s.color}">${s.label}</span></div>
+      <div class="detail-row"><span class="detail-label">Lien</span><a href="${lead.lien}" target="_blank" class="link">${lead.lien || "—"}</a></div>
+      <div class="detail-row"><span class="detail-label">Abonnés</span><span>${lead.abonnes || "—"}</span></div>
+      <div class="detail-row"><span class="detail-label">Niche</span><span>${NICHES[lead.niche] || "—"}</span></div>
+      <div class="detail-row"><span class="detail-label">Source</span>
+        <select id="source-select" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none;cursor:pointer;">
+          <option value="">— Choisir —</option>
+          ${Object.entries(SOURCES).map(([k, v]) => `<option value="${k}" ${lead.source === k ? "selected" : ""}>${v}</option>`).join("")}
+        </select>
+        <button id="save-source" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;color:var(--text2);font-size:12px;cursor:pointer;margin-left:6px;">Sauver</button>
       </div>
-      <div class="detail-row">
-        <span class="detail-label">Lien</span>
-        <a href="${lead.lien}" target="_blank" class="link">${lead.lien || "—"}</a>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Abonnés</span>
-        <span>${lead.abonnes || "—"}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Niche</span>
-        <span>${NICHES[lead.niche] || "—"}</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Ajouté le</span>
-        <span>${lead.date_ajout || "—"}</span>
-      </div>
-      ${lead.date_contact ? `
-        <div class="detail-row">
-          <span class="detail-label">Contacté le</span>
-          <span>${lead.date_contact}${heureDM ? ` <span style="color:var(--text3);font-size:11px;">🕐 ${heureDM}</span>` : ""}</span>
-        </div>` : ""}
-      ${lead.dm_utilise ? `
-        <div class="detail-row">
-          <span class="detail-label">DM utilisé</span>
-          <span style="color:${DM_TEMPLATES[lead.dm_utilise]?.color}">${DM_TEMPLATES[lead.dm_utilise]?.label || lead.dm_utilise.toUpperCase()}</span>
-        </div>` : ""}
-      ${lead.heure_reponse ? `
-        <div class="detail-row">
-          <span class="detail-label">Heure de réponse</span>
-          <span style="color:var(--green)">💬 ${lead.heure_reponse}</span>
-        </div>` : ""}
+      <div class="detail-row"><span class="detail-label">Ajouté le</span><span>${lead.date_ajout || "—"}</span></div>
+      ${lead.date_contact ? `<div class="detail-row"><span class="detail-label">Contacté le</span><span>${lead.date_contact}${heureDM ? ` <span style="color:var(--text3);font-size:11px;">🕐 ${heureDM}</span>` : ""}</span></div>` : ""}
+      ${lead.dm_utilise ? `<div class="detail-row"><span class="detail-label">DM utilisé</span><span style="color:${DM_TEMPLATES[lead.dm_utilise]?.color}">${DM_TEMPLATES[lead.dm_utilise]?.label || lead.dm_utilise.toUpperCase()}</span></div>` : ""}
+      ${lead.heure_reponse ? `<div class="detail-row"><span class="detail-label">Heure de réponse</span><span style="color:var(--green)">💬 ${lead.heure_reponse}</span></div>` : ""}
       <div class="detail-row">
         <span class="detail-label">Compte IG</span>
         <div style="display:flex;gap:6px;align-items:center;">
-          <select id="compte-ig-select"
-            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none;cursor:pointer;">
+          <select id="compte-ig-select" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none;cursor:pointer;">
             <option value="">— Choisir —</option>
             ${comptesBase.map(c => `<option value="${c}" ${lead.compte_ig === c ? "selected" : ""}>${c}</option>`).join("")}
             <option value="__nouveau__">➕ Nouveau compte...</option>
           </select>
-          <button id="save-compte-ig"
-            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;color:var(--text2);font-size:12px;cursor:pointer;">
-            Sauver
-          </button>
+          <button id="save-compte-ig" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;color:var(--text2);font-size:12px;cursor:pointer;">Sauver</button>
         </div>
       </div>
       <div id="nouveau-compte-wrap" style="display:none;margin-top:6px;">
-        <input type="text" id="nouveau-compte-input" placeholder="@NouveauCompte"
-          style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;">
+        <input type="text" id="nouveau-compte-input" placeholder="@NouveauCompte" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;">
       </div>
-      ${lead.date_relance ? `
-        <div class="detail-row">
-          <span class="detail-label">Relance</span>
-          <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
-            ⏰ ${lead.date_relance}
-            ${retard ? `<span class="retard-inline">⚠️ ${retard}j de retard</span>` : ""}
-          </span>
-        </div>` : ""}
-      ${lead.nb_relances > 0 ? `
-        <div class="detail-row">
-          <span class="detail-label">Nb relances</span>
-          <span>🔁 ${lead.nb_relances} relance${lead.nb_relances > 1 ? "s" : ""}</span>
-        </div>` : ""}
-      ${lead.notes ? `
-        <div class="detail-row notes">
-          <span class="detail-label">Notes</span>
-          <span>${lead.notes}</span>
-        </div>` : ""}
+      ${lead.date_relance ? `<div class="detail-row"><span class="detail-label">Relance</span><span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>⏰ ${lead.date_relance}${retard ? ` <span class="retard-inline">⚠️ ${retard}j de retard</span>` : ""}</span></div>` : ""}
+      ${lead.nb_relances > 0 ? `<div class="detail-row"><span class="detail-label">Nb relances</span><span>🔁 ${lead.nb_relances} relance${lead.nb_relances > 1 ? "s" : ""}</span></div>` : ""}
+      ${lead.notes ? `<div class="detail-row notes"><span class="detail-label">Notes</span><span>${lead.notes}</span></div>` : ""}
     </div>
 
     <div class="modal-section">
       <div class="detail-label">Changer le statut</div>
       <div class="statut-buttons">
         ${Object.entries(STATUTS).map(([key, val]) => `
-          <button class="btn-statut ${lead.statut === key ? "active" : ""}" style="--color:${val.color}"
-            data-statut="${key}">${val.label}</button>
+          <button class="btn-statut ${lead.statut === key ? "active" : ""}" style="--color:${val.color}" data-statut="${key}">${val.label}</button>
         `).join("")}
       </div>
     </div>
@@ -480,9 +325,16 @@ async function openLead(id) {
     </div>
   `;
 
+  document.getElementById("save-source").addEventListener("click", async () => {
+    const val = document.getElementById("source-select").value;
+    await updateLead(currentId, { source: val || null });
+    const btn = document.getElementById("save-source");
+    btn.textContent = "✅"; btn.style.color = "var(--green)";
+    setTimeout(() => { btn.textContent = "Sauver"; btn.style.color = "var(--text2)"; }, 1200);
+  });
+
   document.getElementById("compte-ig-select").addEventListener("change", (e) => {
-    document.getElementById("nouveau-compte-wrap").style.display =
-      e.target.value === "__nouveau__" ? "block" : "none";
+    document.getElementById("nouveau-compte-wrap").style.display = e.target.value === "__nouveau__" ? "block" : "none";
   });
 
   document.getElementById("save-compte-ig").addEventListener("click", async () => {
@@ -496,35 +348,27 @@ async function openLead(id) {
     if (!val) return;
     await updateLead(currentId, { compte_ig: val });
     const btn = document.getElementById("save-compte-ig");
-    if (btn) {
-      btn.textContent = "✅";
-      btn.style.color = "var(--green)";
-      setTimeout(() => openLead(currentId), 1200);
-    }
+    btn.textContent = "✅"; btn.style.color = "var(--green)";
+    setTimeout(() => openLead(currentId), 1200);
   });
 
   document.querySelectorAll(".btn-statut[data-statut]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const statut = btn.dataset.statut;
-
       if (statut === "contacte") {
-        // 1. Popup compte IG
         showComptePopup((compte) => {
-          // 2. Popup choix DM
           showDMPopup(currentId, async (dm) => {
             await updateLead(currentId, { statut, compte_ig: compte, dm_utilise: dm });
             window.closeModal();
             loadLeads();
           });
         });
-
       } else if (statut === "en_discussion") {
         showHeureReponsePopup(async (heure) => {
           await updateLead(currentId, { statut, heure_reponse: heure });
           window.closeModal();
           loadLeads();
         });
-
       } else {
         await updateLead(currentId, { statut });
         window.closeModal();
@@ -553,7 +397,6 @@ window.initLeads = function() {
   const params = new URLSearchParams(window.location.search);
   if (params.get("statut")) document.getElementById("filter-statut").value = params.get("statut");
   if (params.get("niche"))  document.getElementById("filter-niche").value  = params.get("niche");
-
   document.getElementById("search").addEventListener("input", () => {
     clearTimeout(debounce);
     debounce = setTimeout(() => { page = 0; loadLeads(); }, 400);
@@ -562,6 +405,5 @@ window.initLeads = function() {
   document.getElementById("filter-niche").addEventListener("change",  () => { page = 0; loadLeads(); });
   document.getElementById("prev-btn").addEventListener("click", () => { page--; loadLeads(); });
   document.getElementById("next-btn").addEventListener("click", () => { page++; loadLeads(); });
-
   loadLeads();
 };
