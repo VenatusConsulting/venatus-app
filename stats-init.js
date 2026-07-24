@@ -8,10 +8,10 @@ const DM_TEMPLATES_TEXT = {
 };
 
 const DM_COLORS     = { dm1: "#667eea", dm2: "#f59e0b", dm3: "#10b981", dm4: "#ec4899" };
+const DM_LABELS     = { dm1: "DM 1", dm2: "DM 2", dm3: "DM 3", dm4: "DM 4" };
 const NICHE_LABELS  = { influenceuse: "💋 Influenceuse", fitness: "💪 Fitness", gaming: "🎮 Gaming", cosplay: "🎨 Cosplay" };
 const NICHE_COLORS  = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
 const COMPTE_COLORS = ["#667eea","#f59e0b","#10b981","#ec4899","#29b6f6","#8b5cf6"];
-const DM_LABELS     = { dm1: "DM 1", dm2: "DM 2", dm3: "DM 3", dm4: "DM 4" };
 
 function taux_color(taux) {
   if (taux >= 30) return "var(--green)";
@@ -72,6 +72,40 @@ function renderTable(headers, rows) {
   `;
 }
 
+function renderMatrix(rowKeys, colKeys, matrix, rowLabelFn, colLabelFn, rowColorFn) {
+  return `
+    <div style="overflow-x:auto;">
+      <table class="dm-table" style="min-width:400px;">
+        <thead>
+          <tr>
+            <th></th>
+            ${colKeys.map(c => `<th>${colLabelFn(c)}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${rowKeys.map(row => `
+            <tr>
+              <td style="font-weight:600;color:${rowColorFn(row)}">${rowLabelFn(row)}</td>
+              ${colKeys.map(col => {
+                const cell = matrix[row]?.[col];
+                if (!cell || cell.total === 0) return `<td style="text-align:center;color:var(--border2);">—</td>`;
+                const bg = cell.taux >= 30 ? 'rgba(76,175,80,0.1)' : cell.taux >= 15 ? 'rgba(245,158,11,0.08)' : '';
+                return `
+                  <td style="text-align:center;background:${bg};">
+                    <span style="color:${taux_color(cell.taux)};font-weight:700;">${cell.taux}%</span>
+                    <div style="font-size:10px;color:var(--text3);">${cell.reponses}/${cell.total}</div>
+                  </td>
+                `;
+              }).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;">Vert = +30% · Jaune = +15% · — = pas de données</div>
+  `;
+}
+
 // ── DM ──────────────────────────────────────────────────────────────────────
 
 async function loadDM() {
@@ -79,8 +113,8 @@ async function loadDM() {
   const entries = Object.entries(data);
   if (!entries.length) return;
   const best = entries.reduce((a, b) => b[1].taux > a[1].taux ? b : a, entries[0]);
-
   const [key, b] = best;
+
   document.getElementById("best-dm-card").innerHTML = `
     <div style="display:flex;align-items:center;gap:16px;">
       <div style="font-size:32px;">🏆</div>
@@ -158,8 +192,7 @@ async function loadComptes() {
     </div>
   `;
   document.getElementById("comptes-bars").innerHTML = renderBars(
-    data,
-    item => item.compte,
+    data, item => item.compte,
     item => COMPTE_COLORS[data.indexOf(item) % COMPTE_COLORS.length]
   );
   document.getElementById("comptes-table").innerHTML = renderTable(
@@ -201,8 +234,7 @@ async function loadNiches() {
     </div>
   `;
   document.getElementById("niches-bars").innerHTML = renderBars(
-    data,
-    item => NICHE_LABELS[item.niche] || item.niche,
+    data, item => NICHE_LABELS[item.niche] || item.niche,
     item => NICHE_COLORS[item.niche] || "#667eea"
   );
   document.getElementById("niches-table").innerHTML = renderTable(
@@ -238,7 +270,6 @@ async function loadTendances() {
       `).join("")}
     </div>
   `;
-
   document.getElementById("tendances-taux").innerHTML = `
     <div class="tendance-chart">
       ${data.map(d => `
@@ -252,7 +283,6 @@ async function loadTendances() {
       `).join("")}
     </div>
   `;
-
   document.getElementById("tendances-table").innerHTML = renderTable(
     ["Semaine", "Leads ajoutés", "Contactées", "Réponses", "Taux"],
     data.map(d => `
@@ -269,7 +299,6 @@ async function loadTendances() {
 
 async function loadProfils() {
   const data = await getStatsProfils();
-
   const kpis = [
     { icon: "👥", label: "Abonnés moyens (tous leads)",    val: fmt_num(data.tous?.moyenne) },
     { icon: "💬", label: "Abonnés moyens (qui répondent)", val: fmt_num(data.repondeurs?.moyenne), color: "var(--green)" },
@@ -278,7 +307,6 @@ async function loadProfils() {
     { icon: "🔽", label: "Min followers répondeurs",       val: fmt_num(data.repondeurs?.min) },
     { icon: "🔼", label: "Max followers répondeurs",       val: fmt_num(data.repondeurs?.max) },
   ];
-
   document.getElementById("profils-kpis").innerHTML = kpis.map(k => `
     <div class="kpi-card">
       <div class="kpi-icon">${k.icon}</div>
@@ -289,14 +317,14 @@ async function loadProfils() {
 
   const moy_rep  = data.repondeurs?.moyenne;
   const moy_tous = data.tous?.moyenne;
-  let insight    = "";
+  let insight = "";
   if (moy_rep && moy_tous) {
     const diff = moy_rep > moy_tous ? "plus gros" : "plus petits";
     insight = `Les profils qui répondent ont en moyenne <strong style="color:var(--green)">${fmt_num(moy_rep)} abonnés</strong> — des comptes ${diff} que la moyenne de tes leads (${fmt_num(moy_tous)}).`;
   } else if (moy_tous) {
     insight = `Tu as des données sur ${data.tous?.count} leads avec une moyenne de <strong style="color:var(--purple)">${fmt_num(moy_tous)} abonnés</strong>.`;
   } else {
-    insight = "Pas encore assez de données. Renseigne les abonnés de tes leads pour voir les insights.";
+    insight = "Pas encore assez de données.";
   }
   if (data.signes?.moyenne) {
     insight += ` Tes leads signés ont en moyenne <strong style="color:var(--yellow)">${fmt_num(data.signes.moyenne)} abonnés</strong>.`;
@@ -305,7 +333,6 @@ async function loadProfils() {
 
   const tranches = data.tranches || {};
   const maxTaux  = Math.max(...Object.values(tranches).map(t => t.taux), 1);
-
   document.getElementById("profils-tranches").innerHTML = Object.entries(tranches).map(([tranche, val]) => {
     const pct   = Math.round((val.taux / Math.max(maxTaux, 1)) * 100);
     const color = val.taux >= 30 ? "var(--green)" : val.taux >= 15 ? "var(--yellow)" : "#667eea";
@@ -328,7 +355,6 @@ async function loadProfils() {
 
 async function loadTiming() {
   const data = await getStatsTiming();
-
   const totalEnvoyes  = data.heures_envoi.reduce((a, b) => a + b, 0);
   const totalReponses = data.heures_reponse.reduce((a, b) => a + b, 0);
   const hasData       = totalEnvoyes > 0;
@@ -337,12 +363,10 @@ async function loadTiming() {
     (best, h) => h.envoyes > best.envoyes ? h : best,
     { heure: 0, envoyes: 0, reponses: 0, taux: 0 }
   );
-
   const bestReponse = data.heures_reponse.reduce(
     (best, v, h) => v > best.count ? { heure: h, count: v } : best,
     { heure: 0, count: 0 }
   );
-
   const bestTaux = data.taux_par_heure.reduce(
     (best, h) => (h.taux > best.taux && h.envoyes >= 2) ? h : best,
     { heure: 0, envoyes: 0, reponses: 0, taux: 0 }
@@ -363,7 +387,7 @@ async function loadTiming() {
     </div>
     ${bestTaux.taux > 0 ? `
       <div style="padding:12px 16px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:13px;color:var(--yellow);">
-        🔥 Meilleur taux : <strong>${bestTaux.taux}%</strong> de réponse pour les DMs envoyés à <strong>${fmt_heure(bestTaux.heure)}</strong>
+        🔥 Meilleur taux : <strong>${bestTaux.taux}%</strong> pour les DMs envoyés à <strong>${fmt_heure(bestTaux.heure)}</strong>
         (${bestTaux.reponses} réponse${bestTaux.reponses > 1 ? "s" : ""} sur ${bestTaux.envoyes} envois)
       </div>
     ` : `
@@ -373,7 +397,7 @@ async function loadTiming() {
     `}
   ` : `<div class="empty">Pas encore de données — envoie des DMs pour voir les stats</div>`;
 
-  document.getElementById("timing-envoi").innerHTML    = renderHourBars(data.heures_envoi, "var(--purple)");
+  document.getElementById("timing-envoi").innerHTML   = renderHourBars(data.heures_envoi, "var(--purple)");
 
   const maxRep = Math.max(...data.heures_reponse, 1);
   document.getElementById("timing-reponse").innerHTML = `
@@ -418,7 +442,6 @@ async function loadTiming() {
   const distribEntries = Object.entries(distrib);
   const maxDistrib     = Math.max(...distribEntries.map(([,v]) => v), 1);
   const labels         = { "0": "Direct", "1": "1 relance", "2": "2 relances", "3": "3 relances", "4+": "4+ relances" };
-
   document.getElementById("timing-distrib").innerHTML = distribEntries.map(([key, count]) => `
     <div class="dm-bar-row">
       <div class="dm-bar-label" style="width:80px;flex-shrink:0;">${labels[key] || key}</div>
@@ -449,7 +472,8 @@ async function loadCroise() {
       <div style="
         display:flex;align-items:center;gap:14px;
         padding:12px 16px;
-        background:var(--bg3);border:1px solid ${item.taux >= 30 ? 'rgba(76,175,80,0.3)' : item.taux >= 15 ? 'rgba(245,158,11,0.2)' : 'var(--border2)'};
+        background:var(--bg3);
+        border:1px solid ${item.taux >= 30 ? 'rgba(76,175,80,0.3)' : item.taux >= 15 ? 'rgba(245,158,11,0.2)' : 'var(--border2)'};
         border-radius:10px;margin-bottom:8px;
       ">
         <div style="font-size:20px;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'🏅'}</div>
@@ -475,84 +499,45 @@ async function loadCroise() {
   ` : `<div class="empty">Pas encore assez de données — continue à envoyer des DMs en renseignant niche et DM utilisé</div>`;
 
   // Matrice DM x Niche
-  const niches = ["influenceuse", "fitness", "gaming", "cosplay"];
-  const dms    = ["dm1", "dm2", "dm3", "dm4"];
+  const niches  = ["influenceuse","fitness","gaming","cosplay"];
+  const dms     = ["dm1","dm2","dm3","dm4"];
   const dmNiche = data.dm_niche || {};
-
-  document.getElementById("croise-dm-niche").innerHTML = `
-    <div style="overflow-x:auto;">
-      <table class="dm-table" style="min-width:500px;">
-        <thead>
-          <tr>
-            <th>DM \ Niche</th>
-            ${niches.map(n => `<th style="color:${NICHE_COLORS[n]}">${NICHE_LABELS[n]}</th>`).join("")}
-          </tr>
-        </thead>
-        <tbody>
-          ${dms.map(dm => `
-            <tr>
-              <td style="color:${DM_COLORS[dm]};font-weight:600;">${DM_LABELS[dm]}</td>
-              ${niches.map(niche => {
-                const cell = dmNiche[dm]?.[niche] || { total: 0, reponses: 0, taux: 0 };
-                const bg   = cell.taux >= 30 ? 'rgba(76,175,80,0.1)' : cell.taux >= 15 ? 'rgba(245,158,11,0.08)' : '';
-                return `
-                  <td style="text-align:center;background:${bg};">
-                    ${cell.total > 0
-                      ? `<span style="color:${taux_color(cell.taux)};font-weight:700;">${cell.taux}%</span>
-                         <div style="font-size:10px;color:var(--text3);">${cell.reponses}/${cell.total}</div>`
-                      : `<span style="color:var(--border2);">—</span>`
-                    }
-                  </td>
-                `;
-              }).join("")}
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:8px;">Vert = +30% · Jaune = +15% · — = pas de données</div>
-  `;
+  document.getElementById("croise-dm-niche").innerHTML = renderMatrix(
+    dms, niches, dmNiche,
+    dm    => `<span style="color:${DM_COLORS[dm]}">${DM_LABELS[dm]}</span>`,
+    niche => `<span style="color:${NICHE_COLORS[niche]}">${NICHE_LABELS[niche]}</span>`,
+    dm    => DM_COLORS[dm]
+  );
 
   // Tranche followers x Heure d'envoi
   const th = data.tranches_heures || [];
   if (th.length === 0) {
     document.getElementById("croise-tranches-heures").innerHTML =
-      '<div class="empty">Pas encore assez de données — continue à tracker tes envois</div>';
+      '<div class="empty">Pas encore assez de données</div>';
   } else {
-    const tranches = ["< 10K","10K-50K","50K-200K","200K-500K","500K-1M","> 1M"];
-    const heures   = [...new Set(th.map(t => t.heure))].sort((a,b) => a-b);
-
-    const matrix = {};
-    tranches.forEach(t => { matrix[t] = {}; });
-    th.forEach(item => {
-      if (matrix[item.tranche]) {
-        matrix[item.tranche][item.heure] = item;
-      }
-    });
+    const tranchesOrder = ["< 10K","10K-50K","50K-200K","200K-500K","500K-1M","> 1M"];
+    const heures        = [...new Set(th.map(t => t.heure))].sort((a,b) => a-b);
+    const matrix        = {};
+    tranchesOrder.forEach(t => { matrix[t] = {}; });
+    th.forEach(item => { if (matrix[item.tranche]) matrix[item.tranche][item.heure] = item; });
+    const tranchesPresentes = tranchesOrder.filter(t => th.some(x => x.tranche === t));
 
     document.getElementById("croise-tranches-heures").innerHTML = `
       <div style="overflow-x:auto;">
-        <table class="dm-table" style="min-width:600px;">
-          <thead>
-            <tr>
-              <th>Tranche \ Heure</th>
-              ${heures.map(h => `<th>${fmt_heure(h)}</th>`).join("")}
-            </tr>
-          </thead>
+        <table class="dm-table" style="min-width:500px;">
+          <thead><tr><th>Tranche \ Heure</th>${heures.map(h => `<th>${fmt_heure(h)}</th>`).join("")}</tr></thead>
           <tbody>
-            ${tranches.filter(t => th.some(x => x.tranche === t)).map(tranche => `
+            ${tranchesPresentes.map(tranche => `
               <tr>
                 <td style="font-weight:600;">${tranche}</td>
                 ${heures.map(h => {
                   const cell = matrix[tranche]?.[h];
                   if (!cell || cell.total === 0) return `<td style="text-align:center;color:var(--border2);">—</td>`;
                   const bg = cell.taux >= 30 ? 'rgba(76,175,80,0.1)' : cell.taux >= 15 ? 'rgba(245,158,11,0.08)' : '';
-                  return `
-                    <td style="text-align:center;background:${bg};">
-                      <span style="color:${taux_color(cell.taux)};font-weight:700;">${cell.taux}%</span>
-                      <div style="font-size:10px;color:var(--text3);">${cell.reponses}/${cell.total}</div>
-                    </td>
-                  `;
+                  return `<td style="text-align:center;background:${bg};">
+                    <span style="color:${taux_color(cell.taux)};font-weight:700;">${cell.taux}%</span>
+                    <div style="font-size:10px;color:var(--text3);">${cell.reponses}/${cell.total}</div>
+                  </td>`;
                 }).join("")}
               </tr>
             `).join("")}
@@ -561,6 +546,46 @@ async function loadCroise() {
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:8px;">Vert = +30% · Jaune = +15% · — = pas de données</div>
     `;
+  }
+
+  // Compte IG x Niche
+  const compteNiche   = data.compte_niche  || [];
+  const compteTranche = data.compte_tranche || [];
+  const allComptes    = [...new Set([...compteNiche.map(x => x.compte), ...compteTranche.map(x => x.compte)])];
+
+  if (compteNiche.length === 0) {
+    document.getElementById("croise-compte-niche").innerHTML =
+      '<div class="empty">Pas encore assez de données</div>';
+  } else {
+    const matrixCN = {};
+    allComptes.forEach(c => { matrixCN[c] = {}; });
+    compteNiche.forEach(item => { if (matrixCN[item.compte]) matrixCN[item.compte][item.niche] = item; });
+
+    document.getElementById("croise-compte-niche").innerHTML = renderMatrix(
+      allComptes, niches, matrixCN,
+      compte => compte,
+      niche  => `<span style="color:${NICHE_COLORS[niche]}">${NICHE_LABELS[niche]}</span>`,
+      ()     => "var(--purple)"
+    );
+  }
+
+  // Compte IG x Tranche followers
+  if (compteTranche.length === 0) {
+    document.getElementById("croise-compte-tranche").innerHTML =
+      '<div class="empty">Pas encore assez de données</div>';
+  } else {
+    const tranchesOrder  = ["< 10K","10K-50K","50K-200K","200K-500K","500K-1M","> 1M"];
+    const tranchesPresentes = tranchesOrder.filter(t => compteTranche.some(x => x.tranche === t));
+    const matrixCT = {};
+    allComptes.forEach(c => { matrixCT[c] = {}; });
+    compteTranche.forEach(item => { if (!matrixCT[item.compte]) matrixCT[item.compte] = {}; matrixCT[item.compte][item.tranche] = item; });
+
+    document.getElementById("croise-compte-tranche").innerHTML = renderMatrix(
+      allComptes, tranchesPresentes, matrixCT,
+      compte  => compte,
+      tranche => tranche,
+      ()      => "var(--purple)"
+    );
   }
 }
 
