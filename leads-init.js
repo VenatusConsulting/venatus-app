@@ -1,6 +1,4 @@
-import { getLeads, getLead, updateLead, addNote } from "./api-module.js";
-
-const API = "https://venatus-api.onrender.com";
+import { getLeads, getLead, updateLead, addNote, incrementRelance } from "./api-module.js";
 
 const STATUTS = {
   nouveau:       { label: "🆕 Nouveau",       color: "#667eea" },
@@ -20,14 +18,6 @@ const NICHES = {
 
 let page = 0, total = 0, currentId = null, debounce = null;
 const LIMIT = 20;
-
-async function getComptesIG() {
-  try {
-    const res  = await fetch(`${API}/comptes-ig`);
-    if (!res.ok) return ["@Popsy.Mel", "@Ceo.Maxime"];
-    return res.json();
-  } catch { return ["@Popsy.Mel", "@Ceo.Maxime"]; }
-}
 
 function getRetard(dateRelance) {
   if (!dateRelance) return null;
@@ -71,9 +61,11 @@ function renderLeads(list) {
           <div class="lead-pseudo">${lead.pseudo}</div>
           <div class="lead-meta">
             ${n ? `<span class="tag">${n}</span>` : ""}
-            ${lead.abonnes ? `<span class="tag">👥 ${lead.abonnes}</span>` : ""}
+            ${lead.abonnes   ? `<span class="tag">👥 ${lead.abonnes}</span>` : ""}
             ${lead.compte_ig ? `<span class="tag">📱 ${lead.compte_ig}</span>` : ""}
-            ${retard ? `<span class="tag retard-tag">⚠️ ${retard}j de retard</span>`
+            ${lead.nb_relances > 0 ? `<span class="tag">🔁 ${lead.nb_relances} relance${lead.nb_relances > 1 ? "s" : ""}</span>` : ""}
+            ${retard
+              ? `<span class="tag retard-tag">⚠️ ${retard}j de retard</span>`
               : lead.date_relance ? `<span class="tag">⏰ ${lead.date_relance}</span>` : ""}
           </div>
         </div>
@@ -96,8 +88,6 @@ async function openLead(id) {
   const s    = STATUTS[lead.statut] || STATUTS.nouveau;
   const retard = getRetard(lead.date_relance);
 
-  // Récupère les comptes IG dispo depuis MongoDB via le bot
-  // On utilise une liste statique + l'existant du lead
   const comptesBase = ["@Popsy.Mel", "@Ceo.Maxime"];
   if (lead.compte_ig && !comptesBase.includes(lead.compte_ig)) {
     comptesBase.push(lead.compte_ig);
@@ -107,20 +97,53 @@ async function openLead(id) {
   document.getElementById("modal").classList.remove("hidden");
   document.getElementById("modal-body").innerHTML = `
     <div class="lead-detail">
-      <div class="detail-row"><span class="detail-label">Statut</span><span style="color:${s.color}">${s.label}</span></div>
-      <div class="detail-row"><span class="detail-label">Lien</span><a href="${lead.lien}" target="_blank" class="link">${lead.lien || "—"}</a></div>
-      <div class="detail-row"><span class="detail-label">Abonnés</span><span>${lead.abonnes || "—"}</span></div>
-      <div class="detail-row"><span class="detail-label">Niche</span><span>${NICHES[lead.niche] || "—"}</span></div>
-      <div class="detail-row"><span class="detail-label">Ajouté le</span><span>${lead.date_ajout || "—"}</span></div>
-      ${lead.date_contact ? `<div class="detail-row"><span class="detail-label">Contacté le</span><span>${lead.date_contact}</span></div>` : ""}
-      ${lead.dm_utilise ? `<div class="detail-row"><span class="detail-label">DM utilisé</span><span>${lead.dm_utilise.toUpperCase()}</span></div>` : ""}
+      <div class="detail-row">
+        <span class="detail-label">Statut</span>
+        <span style="color:${s.color}">${s.label}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Lien</span>
+        <a href="${lead.lien}" target="_blank" class="link">${lead.lien || "—"}</a>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Abonnés</span>
+        <span>${lead.abonnes || "—"}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Niche</span>
+        <span>${NICHES[lead.niche] || "—"}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Ajouté le</span>
+        <span>${lead.date_ajout || "—"}</span>
+      </div>
+      ${lead.date_contact ? `
+        <div class="detail-row">
+          <span class="detail-label">Contacté le</span>
+          <span>${lead.date_contact}</span>
+        </div>` : ""}
+      ${lead.heure_dm ? `
+        <div class="detail-row">
+          <span class="detail-label">Heure DM envoyé</span>
+          <span>🕐 ${lead.heure_dm}</span>
+        </div>` : ""}
+      ${lead.heure_reponse ? `
+        <div class="detail-row">
+          <span class="detail-label">Heure de réponse</span>
+          <span>💬 ${lead.heure_reponse}</span>
+        </div>` : ""}
+      ${lead.dm_utilise ? `
+        <div class="detail-row">
+          <span class="detail-label">DM utilisé</span>
+          <span>${lead.dm_utilise.toUpperCase()}</span>
+        </div>` : ""}
       <div class="detail-row">
         <span class="detail-label">Compte IG</span>
-        <div style="display:flex;gap:6px;align-items:center;flex:1;justify-content:flex-end;">
+        <div style="display:flex;gap:6px;align-items:center;">
           <select id="compte-ig-select"
             style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--text);font-size:12px;outline:none;cursor:pointer;">
             <option value="">— Choisir —</option>
-            ${comptesBase.map(c => `<option value="${c}" ${lead.compte_ig === c ? 'selected' : ''}>${c}</option>`).join("")}
+            ${comptesBase.map(c => `<option value="${c}" ${lead.compte_ig === c ? "selected" : ""}>${c}</option>`).join("")}
             <option value="__nouveau__">➕ Nouveau compte...</option>
           </select>
           <button id="save-compte-ig" onclick="window._saveCompteIg()"
@@ -133,22 +156,52 @@ async function openLead(id) {
         <input type="text" id="nouveau-compte-input" placeholder="@NouveauCompte"
           style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;">
       </div>
-      ${lead.date_relance ? `<div class="detail-row"><span class="detail-label">Relance</span>
-        <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
-          ⏰ ${lead.date_relance}
-          ${retard ? `<span class="retard-inline">⚠️ ${retard}j de retard</span>` : ""}
-        </span></div>` : ""}
-      ${lead.notes ? `<div class="detail-row notes"><span class="detail-label">Notes</span><span>${lead.notes}</span></div>` : ""}
+      ${lead.date_relance ? `
+        <div class="detail-row">
+          <span class="detail-label">Relance</span>
+          <span ${retard ? 'style="color:#ef5350;font-weight:600;"' : ""}>
+            ⏰ ${lead.date_relance}
+            ${retard ? `<span class="retard-inline">⚠️ ${retard}j de retard</span>` : ""}
+          </span>
+        </div>` : ""}
+      ${lead.nb_relances > 0 ? `
+        <div class="detail-row">
+          <span class="detail-label">Nb relances</span>
+          <span>🔁 ${lead.nb_relances} relance${lead.nb_relances > 1 ? "s" : ""}</span>
+        </div>` : ""}
+      ${lead.notes ? `
+        <div class="detail-row notes">
+          <span class="detail-label">Notes</span>
+          <span>${lead.notes}</span>
+        </div>` : ""}
     </div>
+
+    ${lead.statut === "contacte" ? `
+      <div class="modal-section">
+        <div class="detail-label">⏰ Heure de réponse reçue</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+          <input type="time" id="heure-reponse-input"
+            value="${lead.heure_reponse || ""}"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;outline:none;">
+          <button id="save-heure-reponse" onclick="window._saveHeureReponse()"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:12px;cursor:pointer;">
+            Sauver
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Entre l'heure à laquelle elle t'a répondu sur IG</div>
+      </div>
+    ` : ""}
+
     <div class="modal-section">
       <div class="detail-label">Changer le statut</div>
       <div class="statut-buttons">
         ${Object.entries(STATUTS).map(([key, val]) => `
-          <button class="btn-statut ${lead.statut === key ? 'active' : ''}" style="--color:${val.color}"
+          <button class="btn-statut ${lead.statut === key ? "active" : ""}" style="--color:${val.color}"
             onclick="window._changeStatutL('${key}')">${val.label}</button>
         `).join("")}
       </div>
     </div>
+
     <div class="modal-section">
       <div class="detail-label">Ajouter une note</div>
       <div class="note-input-wrap">
@@ -158,43 +211,60 @@ async function openLead(id) {
     </div>
   `;
 
-  // Affiche le champ texte si "Nouveau compte" sélectionné
   document.getElementById("compte-ig-select").addEventListener("change", (e) => {
-    const wrap = document.getElementById("nouveau-compte-wrap");
-    wrap.style.display = e.target.value === "__nouveau__" ? "block" : "none";
+    document.getElementById("nouveau-compte-wrap").style.display =
+      e.target.value === "__nouveau__" ? "block" : "none";
   });
 }
 
 window._openLeadL = openLead;
+
 window._changeStatutL = async (statut) => {
   await updateLead(currentId, { statut });
   window.closeModal();
   loadLeads();
 };
+
 window._saveNoteL = async () => {
   const note = document.getElementById("note-input").value.trim();
   if (!note) return;
   await addNote(currentId, note);
   openLead(currentId);
 };
+
 window._saveCompteIg = async () => {
   const select = document.getElementById("compte-ig-select");
   let val = select.value;
-
   if (val === "__nouveau__") {
     val = document.getElementById("nouveau-compte-input").value.trim();
     if (!val) return;
     if (!val.startsWith("@")) val = "@" + val;
   }
-
   if (!val) return;
-
   await updateLead(currentId, { compte_ig: val });
   const btn = document.getElementById("save-compte-ig");
   btn.textContent = "✅";
   btn.style.color = "var(--green)";
-  setTimeout(() => { btn.textContent = "Sauver"; btn.style.color = "var(--text2)"; openLead(currentId); }, 1200);
+  setTimeout(() => {
+    btn.textContent = "Sauver";
+    btn.style.color = "var(--text2)";
+    openLead(currentId);
+  }, 1200);
 };
+
+window._saveHeureReponse = async () => {
+  const val = document.getElementById("heure-reponse-input").value;
+  if (!val) return;
+  await updateLead(currentId, { heure_reponse: val });
+  const btn = document.getElementById("save-heure-reponse");
+  btn.textContent = "✅";
+  btn.style.color = "var(--green)";
+  setTimeout(() => {
+    btn.textContent = "Sauver";
+    btn.style.color = "var(--text2)";
+  }, 1500);
+};
+
 window.closeModal = () => {
   document.getElementById("modal").classList.add("hidden");
   currentId = null;
