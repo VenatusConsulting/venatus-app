@@ -304,7 +304,7 @@ async function loadProfils() {
   // Tableau croisé
   document.getElementById("profils-table").innerHTML = renderTable(
     ["Tranche followers", "Leads contactés", "Réponses", "Taux de réponse"],
-    Object.entries(tranches).map(([tranche, val]) => `
+    Object.entries(tranches).map(([tranche, val]) => {
       <tr>
         <td style="font-weight:600;">${tranche}</td>
         <td>${val.total}</td>
