@@ -176,21 +176,19 @@ async function openLead(id) {
         </div>` : ""}
     </div>
 
-    ${lead.statut === "contacte" ? `
-      <div class="modal-section">
-        <div class="detail-label">⏰ Heure de réponse reçue</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
-          <input type="time" id="heure-reponse-input"
-            value="${lead.heure_reponse || ""}"
-            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;outline:none;">
-          <button id="save-heure-reponse" onclick="window._saveHeureReponse()"
-            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:12px;cursor:pointer;">
-            Sauver
-          </button>
-        </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Entre l'heure à laquelle elle t'a répondu sur IG</div>
+    <div class="modal-section">
+      <div class="detail-label">⏰ Heure de réponse reçue</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+        <input type="time" id="heure-reponse-input"
+          value="${lead.heure_reponse || ""}"
+          style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;outline:none;">
+        <button id="save-heure-reponse" onclick="window._saveHeureReponse()"
+          style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:12px;cursor:pointer;">
+          Sauver
+        </button>
       </div>
-    ` : ""}
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">Entre l'heure à laquelle elle t'a répondu sur IG</div>
+    </div>
 
     <div class="modal-section">
       <div class="detail-label">Changer le statut</div>
@@ -236,33 +234,42 @@ window._saveCompteIg = async () => {
   const select = document.getElementById("compte-ig-select");
   let val = select.value;
   if (val === "__nouveau__") {
-    val = document.getElementById("nouveau-compte-input").value.trim();
+    val = document.getElementById("nouveau-compte-input")?.value.trim();
     if (!val) return;
     if (!val.startsWith("@")) val = "@" + val;
   }
   if (!val) return;
   await updateLead(currentId, { compte_ig: val });
   const btn = document.getElementById("save-compte-ig");
-  btn.textContent = "✅";
-  btn.style.color = "var(--green)";
-  setTimeout(() => {
-    btn.textContent = "Sauver";
-    btn.style.color = "var(--text2)";
-    openLead(currentId);
-  }, 1200);
+  if (btn) {
+    btn.textContent = "✅";
+    btn.style.color = "var(--green)";
+    setTimeout(() => {
+      btn.textContent = "Sauver";
+      btn.style.color = "var(--text2)";
+      openLead(currentId);
+    }, 1200);
+  }
 };
 
 window._saveHeureReponse = async () => {
-  const val = document.getElementById("heure-reponse-input").value;
+  const input = document.getElementById("heure-reponse-input");
+  if (!input) return;
+  const val = input.value;
   if (!val) return;
   await updateLead(currentId, { heure_reponse: val });
   const btn = document.getElementById("save-heure-reponse");
-  btn.textContent = "✅";
-  btn.style.color = "var(--green)";
-  setTimeout(() => {
-    btn.textContent = "Sauver";
-    btn.style.color = "var(--text2)";
-  }, 1500);
+  if (btn) {
+    btn.textContent = "✅ Sauvé";
+    btn.style.color = "var(--green)";
+    btn.style.borderColor = "var(--green)";
+    setTimeout(() => {
+      btn.textContent = "Sauver";
+      btn.style.color = "var(--text2)";
+      btn.style.borderColor = "var(--border2)";
+      openLead(currentId);
+    }, 1500);
+  }
 };
 
 window.closeModal = () => {
