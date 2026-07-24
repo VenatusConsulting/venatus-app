@@ -90,98 +90,153 @@ function updatePagination() {
   document.getElementById("next-btn").disabled     = (page + 1) * LIMIT >= total;
 }
 
-// ── Popup choix compte IG ────────────────────────────────────────────────────
+function removePopup() {
+  const p = document.getElementById("action-popup");
+  if (p) p.remove();
+}
+
+// ── Popup choix compte IG (quand on passe en contacté) ───────────────────────
 
 function showComptePopup(onConfirm) {
-  const existing = document.getElementById("compte-popup");
-  if (existing) existing.remove();
-
+  removePopup();
   const popup = document.createElement("div");
-  popup.id = "compte-popup";
+  popup.id = "action-popup";
   popup.style.cssText = `
     position:fixed;inset:0;z-index:2000;
     display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+    background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
   `;
-
   popup.innerHTML = `
-    <div style="
-      background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;
-      padding:28px;width:320px;max-width:90%;
-    ">
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">📱 Depuis quel compte ?</div>
+    <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;padding:28px;width:340px;max-width:90%;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">📱 Depuis quel compte ?</div>
       <div style="font-size:12px;color:#555;margin-bottom:20px;">Choisis le compte Instagram utilisé pour ce DM</div>
-      <div id="compte-popup-buttons" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
         ${COMPTES_IG.map(c => `
-          <button data-compte="${c}" style="
+          <button data-compte="${c}" class="popup-compte-btn" style="
             background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
             padding:10px 16px;color:#e0e0ff;font-size:14px;font-weight:600;
-            cursor:pointer;text-align:left;transition:border-color 0.2s;
+            cursor:pointer;text-align:left;transition:all 0.2s;
           ">${c}</button>
         `).join("")}
-        <button data-compte="__autre__" style="
+        <button data-compte="__autre__" class="popup-compte-btn" style="
           background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-          padding:10px 16px;color:#555;font-size:13px;
-          cursor:pointer;text-align:left;
+          padding:10px 16px;color:#555;font-size:13px;cursor:pointer;text-align:left;
         ">➕ Autre compte...</button>
       </div>
-      <div id="autre-compte-wrap" style="display:none;margin-bottom:12px;">
-        <input type="text" id="autre-compte-input" placeholder="@NouveauCompte" style="
+      <div id="autre-wrap" style="display:none;margin-bottom:12px;">
+        <input type="text" id="autre-input" placeholder="@NouveauCompte" style="
           width:100%;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-          padding:8px 12px;color:#e0e0ff;font-size:13px;outline:none;
-          box-sizing:border-box;
+          padding:8px 12px;color:#e0e0ff;font-size:13px;outline:none;box-sizing:border-box;
         ">
       </div>
       <div style="display:flex;gap:8px;">
-        <button id="compte-popup-cancel" style="
+        <button id="popup-cancel" style="
           flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
           padding:9px;color:#555;font-size:13px;cursor:pointer;
         ">Annuler</button>
-        <button id="compte-popup-confirm" style="
-          flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:8px;
-          padding:9px;color:white;font-size:13px;font-weight:700;cursor:pointer;
+        <button id="popup-confirm" style="
+          flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;
+          border-radius:8px;padding:9px;color:white;font-size:13px;font-weight:700;cursor:pointer;
         ">Confirmer →</button>
       </div>
     </div>
   `;
-
   document.body.appendChild(popup);
 
-  let selectedCompte = null;
+  let selected = null;
 
-  popup.querySelectorAll("[data-compte]").forEach(btn => {
+  popup.querySelectorAll(".popup-compte-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      popup.querySelectorAll("[data-compte]").forEach(b => {
+      popup.querySelectorAll(".popup-compte-btn").forEach(b => {
         b.style.borderColor = "#2a2a45";
         b.style.color = b.dataset.compte === "__autre__" ? "#555" : "#e0e0ff";
       });
       if (btn.dataset.compte === "__autre__") {
-        document.getElementById("autre-compte-wrap").style.display = "block";
-        selectedCompte = "__autre__";
+        document.getElementById("autre-wrap").style.display = "block";
+        selected = "__autre__";
       } else {
-        document.getElementById("autre-compte-wrap").style.display = "none";
-        selectedCompte = btn.dataset.compte;
+        document.getElementById("autre-wrap").style.display = "none";
+        selected = btn.dataset.compte;
       }
       btn.style.borderColor = "#667eea";
       btn.style.color = "#667eea";
     });
   });
 
-  document.getElementById("compte-popup-cancel").addEventListener("click", () => {
-    popup.remove();
-  });
+  document.getElementById("popup-cancel").addEventListener("click", removePopup);
 
-  document.getElementById("compte-popup-confirm").addEventListener("click", () => {
-    let compte = selectedCompte;
+  document.getElementById("popup-confirm").addEventListener("click", () => {
+    let compte = selected;
     if (compte === "__autre__") {
-      compte = document.getElementById("autre-compte-input").value.trim();
+      compte = document.getElementById("autre-input").value.trim();
       if (!compte) return;
       if (!compte.startsWith("@")) compte = "@" + compte;
       if (!COMPTES_IG.includes(compte)) COMPTES_IG.push(compte);
     }
     if (!compte) return;
-    popup.remove();
+    removePopup();
     onConfirm(compte);
+  });
+}
+
+// ── Popup heure de réponse (quand on passe en discussion) ────────────────────
+
+function showHeureReponsePopup(onConfirm) {
+  removePopup();
+  const now  = new Date();
+  const hh   = String(now.getHours()).padStart(2, "0");
+  const mm   = String(now.getMinutes()).padStart(2, "0");
+  const defaut = `${hh}:${mm}`;
+
+  const popup = document.createElement("div");
+  popup.id = "action-popup";
+  popup.style.cssText = `
+    position:fixed;inset:0;z-index:2000;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
+  `;
+  popup.innerHTML = `
+    <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;padding:28px;width:340px;max-width:90%;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">💬 Elle a répondu !</div>
+      <div style="font-size:12px;color:#555;margin-bottom:20px;">À quelle heure elle t'a répondu sur Instagram ?</div>
+
+      <div style="
+        background:#0f0f1e;border:1px solid #2a2a45;border-radius:12px;
+        padding:20px;text-align:center;margin-bottom:20px;
+      ">
+        <input type="time" id="heure-rep-input" value="${defaut}" style="
+          background:transparent;border:none;outline:none;
+          font-size:36px;font-weight:700;color:#e0e0ff;
+          text-align:center;width:100%;cursor:pointer;
+        ">
+        <div style="font-size:11px;color:#555;margin-top:6px;">Heure de réponse reçue</div>
+      </div>
+
+      <div style="font-size:12px;color:#555;margin-bottom:16px;text-align:center;">
+        Heure actuelle : ${defaut} — modifie si nécessaire
+      </div>
+
+      <div style="display:flex;gap:8px;">
+        <button id="popup-cancel" style="
+          flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
+          padding:10px;color:#555;font-size:13px;cursor:pointer;
+        ">Annuler</button>
+        <button id="popup-confirm" style="
+          flex:2;background:linear-gradient(135deg,#29b6f6,#0288d1);border:none;
+          border-radius:8px;padding:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;
+        ">✅ Confirmer</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(popup);
+
+  document.getElementById("popup-cancel").addEventListener("click", removePopup);
+
+  document.getElementById("popup-confirm").addEventListener("click", () => {
+    const heure = document.getElementById("heure-rep-input").value;
+    if (!heure) return;
+    removePopup();
+    onConfirm(heure);
   });
 }
 
@@ -278,20 +333,6 @@ async function openLead(id) {
     </div>
 
     <div class="modal-section">
-      <div class="detail-label">⏰ Heure de réponse reçue</div>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-        <input type="time" id="heure-reponse-input"
-          value="${lead.heure_reponse || ""}"
-          style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;flex:1;">
-        <button id="save-heure-reponse"
-          style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:6px;padding:8px 14px;color:white;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
-          💾 Sauver
-        </button>
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:4px;">Entre l'heure à laquelle elle t'a répondu sur IG</div>
-    </div>
-
-    <div class="modal-section">
       <div class="detail-label">Changer le statut</div>
       <div class="statut-buttons">
         ${Object.entries(STATUTS).map(([key, val]) => `
@@ -334,38 +375,27 @@ async function openLead(id) {
     }
   });
 
-  // Heure réponse — event listener direct sur le bouton
-  const btnHeure = document.getElementById("save-heure-reponse");
-  btnHeure.addEventListener("click", async function() {
-    const input = document.getElementById("heure-reponse-input");
-    if (!input || !input.value) {
-      input.style.borderColor = "#ef5350";
-      return;
-    }
-    const val = input.value;
-    this.textContent = "...";
-    this.disabled    = true;
-    try {
-      await updateLead(currentId, { heure_reponse: val });
-      this.textContent    = "✅ Sauvé !";
-      this.style.background = "var(--green)";
-      setTimeout(() => openLead(currentId), 1500);
-    } catch(e) {
-      this.textContent = "❌ Erreur";
-      this.disabled    = false;
-    }
-  });
-
   // Statut buttons
   document.querySelectorAll(".btn-statut[data-statut]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const statut = btn.dataset.statut;
+
       if (statut === "contacte") {
+        // Popup choix compte IG
         showComptePopup(async (compte) => {
           await updateLead(currentId, { statut, compte_ig: compte });
           window.closeModal();
           loadLeads();
         });
+
+      } else if (statut === "en_discussion") {
+        // Popup heure de réponse
+        showHeureReponsePopup(async (heure) => {
+          await updateLead(currentId, { statut, heure_reponse: heure });
+          window.closeModal();
+          loadLeads();
+        });
+
       } else {
         await updateLead(currentId, { statut });
         window.closeModal();
@@ -387,8 +417,7 @@ window._openLeadL = openLead;
 
 window.closeModal = () => {
   document.getElementById("modal").classList.add("hidden");
-  const popup = document.getElementById("compte-popup");
-  if (popup) popup.remove();
+  removePopup();
   currentId = null;
 };
 
