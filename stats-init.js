@@ -7,9 +7,9 @@ const DM_TEMPLATES_TEXT = {
   dm4: { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀" },
 };
 
-const DM_COLORS    = { dm1: "#667eea", dm2: "#f59e0b", dm3: "#10b981", dm4: "#ec4899" };
-const NICHE_LABELS = { influenceuse: "💋 Influenceuse", fitness: "💪 Fitness", gaming: "🎮 Gaming", cosplay: "🎨 Cosplay" };
-const NICHE_COLORS = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
+const DM_COLORS     = { dm1: "#667eea", dm2: "#f59e0b", dm3: "#10b981", dm4: "#ec4899" };
+const NICHE_LABELS  = { influenceuse: "💋 Influenceuse", fitness: "💪 Fitness", gaming: "🎮 Gaming", cosplay: "🎨 Cosplay" };
+const NICHE_COLORS  = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
 const COMPTE_COLORS = ["#667eea","#f59e0b","#10b981","#ec4899","#29b6f6","#8b5cf6"];
 
 function taux_color(taux) {
@@ -19,7 +19,7 @@ function taux_color(taux) {
 }
 
 function fmt_num(n) {
-  if (!n) return "—";
+  if (n == null || n === undefined) return "—";
   if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
   if (n >= 1000)    return Math.round(n / 1000) + "K";
   return n.toString();
@@ -55,7 +55,8 @@ function renderTable(headers, rows) {
 async function loadDM() {
   const data    = await getStatsDM();
   const entries = Object.entries(data);
-  const best    = entries.reduce((a, b) => b[1].taux > a[1].taux ? b : a, entries[0]);
+  if (!entries.length) return;
+  const best = entries.reduce((a, b) => b[1].taux > a[1].taux ? b : a, entries[0]);
 
   if (best) {
     const [key, b] = best;
@@ -139,7 +140,7 @@ async function loadComptes() {
   document.getElementById("comptes-bars").innerHTML = renderBars(
     data,
     item => item.compte,
-    (item) => COMPTE_COLORS[data.indexOf(item) % COMPTE_COLORS.length]
+    item => COMPTE_COLORS[data.indexOf(item) % COMPTE_COLORS.length]
   );
   document.getElementById("comptes-table").innerHTML = renderTable(
     ["Compte", "DMs envoyés", "Réponses", "Signés", "Taux", "Rang"],
@@ -249,14 +250,13 @@ async function loadTendances() {
 async function loadProfils() {
   const data = await getStatsProfils();
 
-  // KPIs croisés
   const kpis = [
-    { icon: "👥", label: "Abonnés moyens (tous leads)",       val: fmt_num(data.tous?.moyenne) },
-    { icon: "💬", label: "Abonnés moyens (qui répondent)",    val: fmt_num(data.repondeurs?.moyenne), color: "var(--green)" },
-    { icon: "✅", label: "Abonnés moyens (signés)",           val: fmt_num(data.signes?.moyenne),    color: "var(--yellow)" },
-    { icon: "📊", label: "Médiane (qui répondent)",           val: fmt_num(data.repondeurs?.mediane) },
-    { icon: "🔽", label: "Min followers répondeurs",          val: fmt_num(data.repondeurs?.min) },
-    { icon: "🔼", label: "Max followers répondeurs",          val: fmt_num(data.repondeurs?.max) },
+    { icon: "👥", label: "Abonnés moyens (tous leads)",    val: fmt_num(data.tous?.moyenne) },
+    { icon: "💬", label: "Abonnés moyens (qui répondent)", val: fmt_num(data.repondeurs?.moyenne), color: "var(--green)" },
+    { icon: "✅", label: "Abonnés moyens (signés)",        val: fmt_num(data.signes?.moyenne),    color: "var(--yellow)" },
+    { icon: "📊", label: "Médiane (qui répondent)",        val: fmt_num(data.repondeurs?.mediane) },
+    { icon: "🔽", label: "Min followers répondeurs",       val: fmt_num(data.repondeurs?.min) },
+    { icon: "🔼", label: "Max followers répondeurs",       val: fmt_num(data.repondeurs?.max) },
   ];
 
   document.getElementById("profils-kpis").innerHTML = kpis.map(k => `
@@ -267,29 +267,31 @@ async function loadProfils() {
     </div>
   `).join("");
 
-  // Insight clé
   const moy_rep  = data.repondeurs?.moyenne;
   const moy_tous = data.tous?.moyenne;
-  let insight = "";
+  let insight    = "";
   if (moy_rep && moy_tous) {
     const diff = moy_rep > moy_tous ? "plus gros" : "plus petits";
     insight = `Les profils qui répondent ont en moyenne <strong style="color:var(--green)">${fmt_num(moy_rep)} abonnés</strong> — des comptes ${diff} que la moyenne de tes leads (${fmt_num(moy_tous)}).`;
+  } else if (moy_tous) {
+    insight = `Tu as des données sur ${data.tous?.count} leads avec une moyenne de <strong style="color:var(--purple)">${fmt_num(moy_tous)} abonnés</strong>. Continue à renseigner les abonnés pour voir qui répond le mieux.`;
+  } else {
+    insight = "Pas encore assez de données. Renseigne les abonnés de tes leads pour voir les insights.";
   }
   if (data.signes?.moyenne) {
     insight += ` Tes leads signés ont en moyenne <strong style="color:var(--yellow)">${fmt_num(data.signes.moyenne)} abonnés</strong>.`;
   }
-  document.getElementById("profils-insight").innerHTML = insight || "Pas encore assez de données pour afficher un insight.";
+  document.getElementById("profils-insight").innerHTML = insight;
 
-  // Tranches par taux de réponse
   const tranches = data.tranches || {};
   const maxTaux  = Math.max(...Object.values(tranches).map(t => t.taux), 1);
 
   document.getElementById("profils-tranches").innerHTML = Object.entries(tranches).map(([tranche, val]) => {
-    const pct   = Math.round((val.taux / maxTaux) * 100);
+    const pct   = Math.round((val.taux / Math.max(maxTaux, 1)) * 100);
     const color = val.taux >= 30 ? "var(--green)" : val.taux >= 15 ? "var(--yellow)" : "#667eea";
     return `
       <div class="dm-bar-row">
-        <div class="dm-bar-label" style="width:100px">${tranche}</div>
+        <div class="dm-bar-label" style="width:110px;flex-shrink:0;">${tranche}</div>
         <div class="dm-bar-wrap">
           <div class="dm-bar-bg">
             <div class="dm-bar-fill" style="width:${pct}%;background:${color}"></div>
@@ -301,10 +303,9 @@ async function loadProfils() {
     `;
   }).join("");
 
-  // Tableau croisé
   document.getElementById("profils-table").innerHTML = renderTable(
-    ["Tranche followers", "Leads contactés", "Réponses", "Taux de réponse"],
-    Object.entries(tranches).map(([tranche, val]) => {
+    ["Tranche followers", "Leads contactés", "Réponses", "Taux"],
+    Object.entries(tranches).map(([tranche, val]) => `
       <tr>
         <td style="font-weight:600;">${tranche}</td>
         <td>${val.total}</td>
