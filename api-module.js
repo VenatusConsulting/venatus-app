@@ -9,6 +9,7 @@ export async function getStatsNiches()      { return fetch(`${API}/stats/niches`
 export async function getStatsTendances()   { return fetch(`${API}/stats/tendances`).then(r => r.json()); }
 export async function getStatsProfils()     { return fetch(`${API}/stats/profils`).then(r => r.json()); }
 export async function getStatsTiming()      { return fetch(`${API}/stats/timing`).then(r => r.json()); }
+export async function getStatsCroise()      { return fetch(`${API}/stats/croise`).then(r => r.json()); }
 
 export async function getLeads(params = {}) {
   return fetch(`${API}/leads?${new URLSearchParams(params)}`).then(r => r.json());
