@@ -95,8 +95,6 @@ function removePopup() {
   if (p) p.remove();
 }
 
-// ── Popup choix compte IG (quand on passe en contacté) ───────────────────────
-
 function showComptePopup(onConfirm) {
   removePopup();
   const popup = document.createElement("div");
@@ -108,7 +106,7 @@ function showComptePopup(onConfirm) {
   `;
   popup.innerHTML = `
     <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;padding:28px;width:340px;max-width:90%;">
-      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">📱 Depuis quel compte ?</div>
+      <div style="font-size:16px;font-weight:700;color:#e0e0ff;margin-bottom:4px;">📱 Depuis quel compte ?</div>
       <div style="font-size:12px;color:#555;margin-bottom:20px;">Choisis le compte Instagram utilisé pour ce DM</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
         ${COMPTES_IG.map(c => `
@@ -164,7 +162,6 @@ function showComptePopup(onConfirm) {
   });
 
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
-
   document.getElementById("popup-confirm").addEventListener("click", () => {
     let compte = selected;
     if (compte === "__autre__") {
@@ -179,13 +176,11 @@ function showComptePopup(onConfirm) {
   });
 }
 
-// ── Popup heure de réponse (quand on passe en discussion) ────────────────────
-
 function showHeureReponsePopup(onConfirm) {
   removePopup();
-  const now  = new Date();
-  const hh   = String(now.getHours()).padStart(2, "0");
-  const mm   = String(now.getMinutes()).padStart(2, "0");
+  const now    = new Date();
+  const hh     = String(now.getHours()).padStart(2, "0");
+  const mm     = String(now.getMinutes()).padStart(2, "0");
   const defaut = `${hh}:${mm}`;
 
   const popup = document.createElement("div");
@@ -196,51 +191,63 @@ function showHeureReponsePopup(onConfirm) {
     background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
   `;
   popup.innerHTML = `
-    <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;padding:28px;width:340px;max-width:90%;">
-      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">💬 Elle a répondu !</div>
-      <div style="font-size:12px;color:#555;margin-bottom:20px;">À quelle heure elle t'a répondu sur Instagram ?</div>
+    <div style="
+      background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;
+      padding:28px;width:340px;max-width:90%;
+    ">
+      <div style="font-size:16px;font-weight:700;color:#e0e0ff;margin-bottom:4px;">💬 Elle a répondu !</div>
+      <div style="font-size:12px;color:#555;margin-bottom:24px;">À quelle heure elle t'a répondu sur Instagram ?</div>
 
       <div style="
         background:#0f0f1e;border:1px solid #2a2a45;border-radius:12px;
-        padding:20px;text-align:center;margin-bottom:20px;
+        padding:20px;text-align:center;margin-bottom:8px;
       ">
-        <input type="time" id="heure-rep-input" value="${defaut}" style="
-          background:transparent;border:none;outline:none;
-          font-size:36px;font-weight:700;color:#e0e0ff;
-          text-align:center;width:100%;cursor:pointer;
-        ">
-        <div style="font-size:11px;color:#555;margin-top:6px;">Heure de réponse reçue</div>
+        <div style="font-size:11px;color:#555;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">Heure de réponse</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+          <select id="heure-h" style="
+            background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
+            padding:10px 14px;color:#e0e0ff;font-size:24px;font-weight:700;
+            outline:none;cursor:pointer;-webkit-appearance:none;text-align:center;
+          ">
+            ${Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,'0')}" ${String(i).padStart(2,'0')===hh?'selected':''}>${String(i).padStart(2,'0')}</option>`).join("")}
+          </select>
+          <span style="font-size:28px;font-weight:700;color:#667eea;">:</span>
+          <select id="heure-m" style="
+            background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
+            padding:10px 14px;color:#e0e0ff;font-size:24px;font-weight:700;
+            outline:none;cursor:pointer;-webkit-appearance:none;text-align:center;
+          ">
+            ${Array.from({length:60},(_,i)=>`<option value="${String(i).padStart(2,'0')}" ${String(i).padStart(2,'0')===mm?'selected':''}>${String(i).padStart(2,'0')}</option>`).join("")}
+          </select>
+        </div>
       </div>
 
-      <div style="font-size:12px;color:#555;margin-bottom:16px;text-align:center;">
-        Heure actuelle : ${defaut} — modifie si nécessaire
+      <div style="font-size:11px;color:#444;text-align:center;margin-bottom:20px;">
+        Pré-rempli avec l'heure actuelle (${defaut}) — ajuste si besoin
       </div>
 
       <div style="display:flex;gap:8px;">
         <button id="popup-cancel" style="
           flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
-          padding:10px;color:#555;font-size:13px;cursor:pointer;
+          padding:11px;color:#555;font-size:13px;cursor:pointer;
         ">Annuler</button>
         <button id="popup-confirm" style="
           flex:2;background:linear-gradient(135deg,#29b6f6,#0288d1);border:none;
-          border-radius:8px;padding:10px;color:white;font-size:13px;font-weight:700;cursor:pointer;
-        ">✅ Confirmer</button>
+          border-radius:8px;padding:11px;color:white;font-size:13px;font-weight:700;cursor:pointer;
+        ">✅ Confirmer en discussion</button>
       </div>
     </div>
   `;
   document.body.appendChild(popup);
 
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
-
   document.getElementById("popup-confirm").addEventListener("click", () => {
-    const heure = document.getElementById("heure-rep-input").value;
-    if (!heure) return;
+    const h = document.getElementById("heure-h").value;
+    const m = document.getElementById("heure-m").value;
     removePopup();
-    onConfirm(heure);
+    onConfirm(`${h}:${m}`);
   });
 }
-
-// ── Modal lead ───────────────────────────────────────────────────────────────
 
 async function openLead(id) {
   currentId    = id;
@@ -351,7 +358,6 @@ async function openLead(id) {
     </div>
   `;
 
-  // Compte IG select
   document.getElementById("compte-ig-select").addEventListener("change", (e) => {
     document.getElementById("nouveau-compte-wrap").style.display =
       e.target.value === "__nouveau__" ? "block" : "none";
@@ -375,27 +381,21 @@ async function openLead(id) {
     }
   });
 
-  // Statut buttons
   document.querySelectorAll(".btn-statut[data-statut]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const statut = btn.dataset.statut;
-
       if (statut === "contacte") {
-        // Popup choix compte IG
         showComptePopup(async (compte) => {
           await updateLead(currentId, { statut, compte_ig: compte });
           window.closeModal();
           loadLeads();
         });
-
       } else if (statut === "en_discussion") {
-        // Popup heure de réponse
         showHeureReponsePopup(async (heure) => {
           await updateLead(currentId, { statut, heure_reponse: heure });
           window.closeModal();
           loadLeads();
         });
-
       } else {
         await updateLead(currentId, { statut });
         window.closeModal();
@@ -404,7 +404,6 @@ async function openLead(id) {
     });
   });
 
-  // Note
   document.getElementById("save-note-btn").addEventListener("click", async () => {
     const note = document.getElementById("note-input").value.trim();
     if (!note) return;
