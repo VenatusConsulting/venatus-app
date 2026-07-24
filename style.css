@@ -741,3 +741,37 @@ body {
 }
 .tendance-val   { font-size: 11px; font-weight: 700; color: var(--text2); }
 .tendance-label { font-size: 10px; color: var(--text3); }
+
+/* ── Hour chart ── */
+.hour-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 120px;
+  padding: 0 4px;
+  overflow-x: auto;
+}
+.hour-col {
+  flex: 1;
+  min-width: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+}
+.hour-bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.hour-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: height 0.4s ease;
+}
+.hour-val   { font-size: 9px; font-weight: 700; color: var(--text2); }
+.hour-label { font-size: 9px; color: var(--text3); }
