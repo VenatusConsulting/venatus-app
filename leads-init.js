@@ -203,27 +203,23 @@ function showHeureReponsePopup(onConfirm) {
         padding:20px;text-align:center;margin-bottom:8px;
       ">
         <div style="font-size:11px;color:#555;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">Heure de réponse</div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
-          <select id="heure-h" style="
+        <input
+          type="text"
+          id="heure-rep-input"
+          value="${defaut}"
+          placeholder="ex: 14:30"
+          maxlength="5"
+          style="
             background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
-            padding:10px 14px;color:#e0e0ff;font-size:24px;font-weight:700;
-            outline:none;cursor:pointer;-webkit-appearance:none;text-align:center;
-          ">
-            ${Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,'0')}" ${String(i).padStart(2,'0')===hh?'selected':''}>${String(i).padStart(2,'0')}</option>`).join("")}
-          </select>
-          <span style="font-size:28px;font-weight:700;color:#667eea;">:</span>
-          <select id="heure-m" style="
-            background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
-            padding:10px 14px;color:#e0e0ff;font-size:24px;font-weight:700;
-            outline:none;cursor:pointer;-webkit-appearance:none;text-align:center;
-          ">
-            ${Array.from({length:60},(_,i)=>`<option value="${String(i).padStart(2,'0')}" ${String(i).padStart(2,'0')===mm?'selected':''}>${String(i).padStart(2,'0')}</option>`).join("")}
-          </select>
-        </div>
+            padding:12px;color:#e0e0ff;font-size:32px;font-weight:700;
+            text-align:center;outline:none;width:140px;
+            box-sizing:border-box;letter-spacing:4px;
+          "
+        >
       </div>
 
       <div style="font-size:11px;color:#444;text-align:center;margin-bottom:20px;">
-        Pré-rempli avec l'heure actuelle (${defaut}) — ajuste si besoin
+        Pré-rempli avec l'heure actuelle (${defaut}) — modifie si besoin
       </div>
 
       <div style="display:flex;gap:8px;">
@@ -240,15 +236,25 @@ function showHeureReponsePopup(onConfirm) {
   `;
   document.body.appendChild(popup);
 
+  // Format automatique HH:MM pendant la saisie
+  const input = document.getElementById("heure-rep-input");
+  input.addEventListener("input", () => {
+    let val = input.value.replace(/[^0-9]/g, "");
+    if (val.length > 2) val = val.slice(0, 2) + ":" + val.slice(2, 4);
+    input.value = val;
+  });
+
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
   document.getElementById("popup-confirm").addEventListener("click", () => {
-    const h = document.getElementById("heure-h").value;
-    const m = document.getElementById("heure-m").value;
+    const val = input.value.trim();
+    if (!val || !val.match(/^\d{2}:\d{2}$/)) {
+      input.style.borderColor = "#ef5350";
+      return;
+    }
     removePopup();
-    onConfirm(`${h}:${m}`);
+    onConfirm(val);
   });
 }
-
 async function openLead(id) {
   currentId    = id;
   const lead   = await getLead(id);
