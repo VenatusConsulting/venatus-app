@@ -1,4 +1,4 @@
-import { getStatsDM, getStatsComptes, getStatsNiches, getStatsTendances, getStatsProfils, getStatsTiming } from "./api-module.js";
+import { getStatsDM, getStatsComptes, getStatsNiches, getStatsTendances, getStatsProfils, getStatsTiming, getStatsCroise } from "./api-module.js";
 
 const DM_TEMPLATES_TEXT = {
   dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗" },
@@ -11,6 +11,7 @@ const DM_COLORS     = { dm1: "#667eea", dm2: "#f59e0b", dm3: "#10b981", dm4: "#e
 const NICHE_LABELS  = { influenceuse: "💋 Influenceuse", fitness: "💪 Fitness", gaming: "🎮 Gaming", cosplay: "🎨 Cosplay" };
 const NICHE_COLORS  = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
 const COMPTE_COLORS = ["#667eea","#f59e0b","#10b981","#ec4899","#29b6f6","#8b5cf6"];
+const DM_LABELS     = { dm1: "DM 1", dm2: "DM 2", dm3: "DM 3", dm4: "DM 4" };
 
 function taux_color(taux) {
   if (taux >= 30) return "var(--green)";
@@ -321,17 +322,6 @@ async function loadProfils() {
       </div>
     `;
   }).join("");
-
-  document.getElementById("profils-table").innerHTML = renderTable(
-    ["Tranche followers", "Leads contactés", "Réponses", "Taux"],
-    Object.entries(tranches).map(([tranche, val]) => `
-      <tr>
-        <td style="font-weight:600;">${tranche}</td>
-        <td>${val.total}</td><td>${val.reponses}</td>
-        <td><span style="color:${taux_color(val.taux)};font-weight:700;">${val.taux}%</span></td>
-      </tr>
-    `)
-  );
 }
 
 // ── Timing ───────────────────────────────────────────────────────────────────
@@ -343,19 +333,16 @@ async function loadTiming() {
   const totalReponses = data.heures_reponse.reduce((a, b) => a + b, 0);
   const hasData       = totalEnvoyes > 0;
 
-  // Heure où tu envoies le plus
   const bestEnvoi = data.taux_par_heure.reduce(
     (best, h) => h.envoyes > best.envoyes ? h : best,
     { heure: 0, envoyes: 0, reponses: 0, taux: 0 }
   );
 
-  // Heure où tu reçois le plus de réponses
   const bestReponse = data.heures_reponse.reduce(
     (best, v, h) => v > best.count ? { heure: h, count: v } : best,
     { heure: 0, count: 0 }
   );
 
-  // Meilleur taux
   const bestTaux = data.taux_par_heure.reduce(
     (best, h) => (h.taux > best.taux && h.envoyes >= 2) ? h : best,
     { heure: 0, envoyes: 0, reponses: 0, taux: 0 }
@@ -386,10 +373,8 @@ async function loadTiming() {
     `}
   ` : `<div class="empty">Pas encore de données — envoie des DMs pour voir les stats</div>`;
 
-  // Graphique envois
-  document.getElementById("timing-envoi").innerHTML = renderHourBars(data.heures_envoi, "var(--purple)");
+  document.getElementById("timing-envoi").innerHTML    = renderHourBars(data.heures_envoi, "var(--purple)");
 
-  // Graphique réponses
   const maxRep = Math.max(...data.heures_reponse, 1);
   document.getElementById("timing-reponse").innerHTML = `
     <div class="hour-chart">
@@ -405,7 +390,6 @@ async function loadTiming() {
     </div>
   `;
 
-  // Taux par heure
   const maxTaux = Math.max(...data.taux_par_heure.map(h => h.taux), 1);
   document.getElementById("timing-taux").innerHTML = `
     <div class="hour-chart">
@@ -421,7 +405,6 @@ async function loadTiming() {
     </div>
   `;
 
-  // Relances
   document.getElementById("timing-relances").innerHTML = `
     <div style="text-align:center;padding:20px 0;">
       <div style="font-size:48px;font-weight:700;color:var(--purple)">${data.moy_relances}</div>
@@ -431,7 +414,6 @@ async function loadTiming() {
     ${data.total_tracked === 0 ? '<div class="empty">Les relances seront comptées automatiquement</div>' : ""}
   `;
 
-  // Distribution relances
   const distrib        = data.distrib_relances;
   const distribEntries = Object.entries(distrib);
   const maxDistrib     = Math.max(...distribEntries.map(([,v]) => v), 1);
@@ -451,6 +433,137 @@ async function loadTiming() {
   `).join("");
 }
 
+// ── Vue globale croisée ──────────────────────────────────────────────────────
+
+async function loadCroise() {
+  const data = await getStatsCroise();
+
+  // Profil idéal
+  const ideal = data.profil_ideal || [];
+  document.getElementById("croise-ideal").innerHTML = ideal.length ? `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px;">🎯 Combinaisons qui convertissent le mieux</div>
+      <div style="font-size:12px;color:var(--text3);">Minimum 2 envois pour apparaître</div>
+    </div>
+    ${ideal.map((item, i) => `
+      <div style="
+        display:flex;align-items:center;gap:14px;
+        padding:12px 16px;
+        background:var(--bg3);border:1px solid ${item.taux >= 30 ? 'rgba(76,175,80,0.3)' : item.taux >= 15 ? 'rgba(245,158,11,0.2)' : 'var(--border2)'};
+        border-radius:10px;margin-bottom:8px;
+      ">
+        <div style="font-size:20px;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'🏅'}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px;">
+            <span style="color:${NICHE_COLORS[item.niche]}">${NICHE_LABELS[item.niche]}</span>
+            <span style="color:var(--text3);font-weight:400;"> · </span>
+            <span style="color:${DM_COLORS[item.dm]}">${DM_TEMPLATES_TEXT[item.dm]?.label}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text3);">
+            📨 ${item.total} envois · 💬 ${item.reponses} réponses
+            ${item.moy_abonnes > 0 ? ` · 👥 ~${fmt_num(item.moy_abonnes)} abonnés en moyenne` : ""}
+          </div>
+        </div>
+        <div style="
+          font-size:20px;font-weight:700;
+          color:${taux_color(item.taux)};
+          background:${item.taux >= 30 ? 'rgba(76,175,80,0.1)' : item.taux >= 15 ? 'rgba(245,158,11,0.1)' : 'var(--bg3)'};
+          border-radius:8px;padding:6px 12px;
+        ">${item.taux}%</div>
+      </div>
+    `).join("")}
+  ` : `<div class="empty">Pas encore assez de données — continue à envoyer des DMs en renseignant niche et DM utilisé</div>`;
+
+  // Matrice DM x Niche
+  const niches = ["influenceuse", "fitness", "gaming", "cosplay"];
+  const dms    = ["dm1", "dm2", "dm3", "dm4"];
+  const dmNiche = data.dm_niche || {};
+
+  document.getElementById("croise-dm-niche").innerHTML = `
+    <div style="overflow-x:auto;">
+      <table class="dm-table" style="min-width:500px;">
+        <thead>
+          <tr>
+            <th>DM \ Niche</th>
+            ${niches.map(n => `<th style="color:${NICHE_COLORS[n]}">${NICHE_LABELS[n]}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${dms.map(dm => `
+            <tr>
+              <td style="color:${DM_COLORS[dm]};font-weight:600;">${DM_LABELS[dm]}</td>
+              ${niches.map(niche => {
+                const cell = dmNiche[dm]?.[niche] || { total: 0, reponses: 0, taux: 0 };
+                const bg   = cell.taux >= 30 ? 'rgba(76,175,80,0.1)' : cell.taux >= 15 ? 'rgba(245,158,11,0.08)' : '';
+                return `
+                  <td style="text-align:center;background:${bg};">
+                    ${cell.total > 0
+                      ? `<span style="color:${taux_color(cell.taux)};font-weight:700;">${cell.taux}%</span>
+                         <div style="font-size:10px;color:var(--text3);">${cell.reponses}/${cell.total}</div>`
+                      : `<span style="color:var(--border2);">—</span>`
+                    }
+                  </td>
+                `;
+              }).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px;">Vert = +30% · Jaune = +15% · — = pas de données</div>
+  `;
+
+  // Tranche followers x Heure d'envoi
+  const th = data.tranches_heures || [];
+  if (th.length === 0) {
+    document.getElementById("croise-tranches-heures").innerHTML =
+      '<div class="empty">Pas encore assez de données — continue à tracker tes envois</div>';
+  } else {
+    const tranches = ["< 10K","10K-50K","50K-200K","200K-500K","500K-1M","> 1M"];
+    const heures   = [...new Set(th.map(t => t.heure))].sort((a,b) => a-b);
+
+    const matrix = {};
+    tranches.forEach(t => { matrix[t] = {}; });
+    th.forEach(item => {
+      if (matrix[item.tranche]) {
+        matrix[item.tranche][item.heure] = item;
+      }
+    });
+
+    document.getElementById("croise-tranches-heures").innerHTML = `
+      <div style="overflow-x:auto;">
+        <table class="dm-table" style="min-width:600px;">
+          <thead>
+            <tr>
+              <th>Tranche \ Heure</th>
+              ${heures.map(h => `<th>${fmt_heure(h)}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${tranches.filter(t => th.some(x => x.tranche === t)).map(tranche => `
+              <tr>
+                <td style="font-weight:600;">${tranche}</td>
+                ${heures.map(h => {
+                  const cell = matrix[tranche]?.[h];
+                  if (!cell || cell.total === 0) return `<td style="text-align:center;color:var(--border2);">—</td>`;
+                  const bg = cell.taux >= 30 ? 'rgba(76,175,80,0.1)' : cell.taux >= 15 ? 'rgba(245,158,11,0.08)' : '';
+                  return `
+                    <td style="text-align:center;background:${bg};">
+                      <span style="color:${taux_color(cell.taux)};font-weight:700;">${cell.taux}%</span>
+                      <div style="font-size:10px;color:var(--text3);">${cell.reponses}/${cell.total}</div>
+                    </td>
+                  `;
+                }).join("")}
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">Vert = +30% · Jaune = +15% · — = pas de données</div>
+    `;
+  }
+}
+
 // ── Tab switch ───────────────────────────────────────────────────────────────
 
 window.switchPerfTab = function(tab) {
@@ -461,5 +574,5 @@ window.switchPerfTab = function(tab) {
 };
 
 window.initStats = async function() {
-  await Promise.all([loadDM(), loadComptes(), loadNiches(), loadTendances(), loadProfils(), loadTiming()]);
+  await Promise.all([loadDM(), loadComptes(), loadNiches(), loadTendances(), loadProfils(), loadTiming(), loadCroise()]);
 };
