@@ -23,11 +23,12 @@
       <div class="page-header"><h1>Stats Performance</h1></div>
 
       <div class="perf-tabs">
-        <button class="perf-tab active" id="tab-dm"       onclick="switchPerfTab('dm')">💬 DM</button>
-        <button class="perf-tab"        id="tab-comptes"  onclick="switchPerfTab('comptes')">📱 Comptes IG</button>
-        <button class="perf-tab"        id="tab-niches"   onclick="switchPerfTab('niches')">🏷️ Niches</button>
+        <button class="perf-tab active" id="tab-dm"        onclick="switchPerfTab('dm')">💬 DM</button>
+        <button class="perf-tab"        id="tab-comptes"   onclick="switchPerfTab('comptes')">📱 Comptes IG</button>
+        <button class="perf-tab"        id="tab-niches"    onclick="switchPerfTab('niches')">🏷️ Niches</button>
         <button class="perf-tab"        id="tab-tendances" onclick="switchPerfTab('tendances')">📅 Tendances</button>
-        <button class="perf-tab"        id="tab-profils"  onclick="switchPerfTab('profils')">👥 Profils</button>
+        <button class="perf-tab"        id="tab-profils"   onclick="switchPerfTab('profils')">👥 Profils</button>
+        <button class="perf-tab"        id="tab-timing"    onclick="switchPerfTab('timing')">⏰ Timing</button>
       </div>
 
       <!-- DM -->
@@ -61,18 +62,38 @@
 
       <!-- Profils -->
       <div class="perf-panel" id="panel-profils">
-        <div class="card">
-          <div class="card-header"><h2>🔍 Insight clé</h2></div>
-          <div id="profils-insight" style="font-size:14px;color:var(--text2);line-height:1.7;"></div>
-        </div>
+        <div class="card"><div class="card-header"><h2>🔍 Insight clé</h2></div><div id="profils-insight" style="font-size:14px;color:var(--text2);line-height:1.7;"></div></div>
         <div class="kpi-grid" id="profils-kpis"></div>
-        <div class="card">
-          <div class="card-header"><h2>📊 Taux de réponse par tranche de followers</h2></div>
-          <div id="profils-tranches"></div>
+        <div class="card"><div class="card-header"><h2>📊 Taux de réponse par tranche de followers</h2></div><div id="profils-tranches"></div></div>
+        <div class="card"><div class="card-header"><h2>Tableau croisé</h2></div><div id="profils-table"></div></div>
+      </div>
+
+      <!-- Timing -->
+      <div class="perf-panel" id="panel-timing">
+        <div class="card" id="timing-best-card"></div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><h2>📨 DMs envoyés par heure</h2></div>
+            <div id="timing-envoi"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2>💬 Réponses reçues par heure</h2></div>
+            <div id="timing-reponse"></div>
+          </div>
         </div>
         <div class="card">
-          <div class="card-header"><h2>Tableau croisé par tranche</h2></div>
-          <div id="profils-table"></div>
+          <div class="card-header"><h2>🎯 Taux de réponse par heure d'envoi</h2></div>
+          <div id="timing-taux"></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><h2>🔁 Relances avant réponse</h2></div>
+            <div id="timing-relances"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2>📊 Distribution des relances</h2></div>
+            <div id="timing-distrib"></div>
+          </div>
         </div>
       </div>
 
