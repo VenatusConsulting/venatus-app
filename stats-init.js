@@ -1,30 +1,25 @@
 import { getStatsDM, getStatsComptes, getStatsNiches, getStatsTendances, getStatsProfils } from "./api-module.js";
-
 const DM_TEMPLATES_TEXT = {
   dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗" },
   dm2: { label: "DM 2 — Girl energy",          text: "idk why but you just have THAT girl energy 💅✨" },
   dm3: { label: "DM 3 — Feed + question",      text: "I love your feed 😍 how long have you been posting?" },
   dm4: { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀" },
 };
-
 const DM_COLORS     = { dm1: "#667eea", dm2: "#f59e0b", dm3: "#10b981", dm4: "#ec4899" };
 const NICHE_LABELS  = { influenceuse: "💋 Influenceuse", fitness: "💪 Fitness", gaming: "🎮 Gaming", cosplay: "🎨 Cosplay" };
 const NICHE_COLORS  = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
 const COMPTE_COLORS = ["#667eea","#f59e0b","#10b981","#ec4899","#29b6f6","#8b5cf6"];
-
 function taux_color(taux) {
   if (taux >= 30) return "var(--green)";
   if (taux >= 15) return "var(--yellow)";
   return "var(--text3)";
 }
-
 function fmt_num(n) {
   if (n == null || n === undefined) return "—";
   if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
   if (n >= 1000)    return Math.round(n / 1000) + "K";
   return n.toString();
 }
-
 function renderBars(items, labelFn, colorFn) {
   const max = Math.max(...items.map(v => v.taux), 1);
   return items.map(item => `
@@ -40,7 +35,6 @@ function renderBars(items, labelFn, colorFn) {
     </div>
   `).join("");
 }
-
 function renderTable(headers, rows) {
   return `
     <table class="dm-table">
@@ -49,15 +43,12 @@ function renderTable(headers, rows) {
     </table>
   `;
 }
-
 // ── DM ──────────────────────────────────────────────────────────────────────
-
 async function loadDM() {
   const data    = await getStatsDM();
   const entries = Object.entries(data);
   if (!entries.length) return;
   const best = entries.reduce((a, b) => b[1].taux > a[1].taux ? b : a, entries[0]);
-
   if (best) {
     const [key, b] = best;
     document.getElementById("best-dm-card").innerHTML = `
@@ -76,13 +67,11 @@ async function loadDM() {
       </div>
     `;
   }
-
   document.getElementById("dm-bars").innerHTML = renderBars(
     entries.map(([k,v]) => ({...v, key: k})),
     item => DM_TEMPLATES_TEXT[item.key]?.label || item.key,
     item => DM_COLORS[item.key]
   );
-
   const sorted = [...entries].sort((a,b) => b[1].taux - a[1].taux);
   document.getElementById("dm-table").innerHTML = renderTable(
     ["DM", "Envoyés", "Réponses", "Signés", "Taux", "Rang"],
@@ -95,7 +84,6 @@ async function loadDM() {
       </tr>
     `)
   );
-
   document.getElementById("dm-templates").innerHTML = entries.map(([key, val]) => `
     <div class="template-card">
       <div class="template-header">
@@ -111,9 +99,7 @@ async function loadDM() {
     </div>
   `).join("");
 }
-
 // ── Comptes IG ───────────────────────────────────────────────────────────────
-
 async function loadComptes() {
   const data = await getStatsComptes();
   if (!data.length) {
@@ -154,9 +140,7 @@ async function loadComptes() {
     `)
   );
 }
-
 // ── Niches ───────────────────────────────────────────────────────────────────
-
 async function loadNiches() {
   const data = await getStatsNiches();
   if (!data.length || data.every(n => n.total === 0)) {
@@ -197,14 +181,11 @@ async function loadNiches() {
     `)
   );
 }
-
 // ── Tendances ────────────────────────────────────────────────────────────────
-
 async function loadTendances() {
   const data      = await getStatsTendances();
   const maxAjouts = Math.max(...data.map(d => d.ajouts), 1);
   const maxTaux   = Math.max(...data.map(d => d.taux), 1);
-
   document.getElementById("tendances-ajouts").innerHTML = `
     <div class="tendance-chart">
       ${data.map(d => `
@@ -218,7 +199,6 @@ async function loadTendances() {
       `).join("")}
     </div>
   `;
-
   document.getElementById("tendances-taux").innerHTML = `
     <div class="tendance-chart">
       ${data.map(d => `
@@ -232,7 +212,6 @@ async function loadTendances() {
       `).join("")}
     </div>
   `;
-
   document.getElementById("tendances-table").innerHTML = renderTable(
     ["Semaine", "Leads ajoutés", "Contactées", "Réponses", "Taux"],
     data.map(d => `
@@ -244,12 +223,9 @@ async function loadTendances() {
     `)
   );
 }
-
 // ── Profils ──────────────────────────────────────────────────────────────────
-
 async function loadProfils() {
   const data = await getStatsProfils();
-
   const kpis = [
     { icon: "👥", label: "Abonnés moyens (tous leads)",    val: fmt_num(data.tous?.moyenne) },
     { icon: "💬", label: "Abonnés moyens (qui répondent)", val: fmt_num(data.repondeurs?.moyenne), color: "var(--green)" },
@@ -258,7 +234,6 @@ async function loadProfils() {
     { icon: "🔽", label: "Min followers répondeurs",       val: fmt_num(data.repondeurs?.min) },
     { icon: "🔼", label: "Max followers répondeurs",       val: fmt_num(data.repondeurs?.max) },
   ];
-
   document.getElementById("profils-kpis").innerHTML = kpis.map(k => `
     <div class="kpi-card">
       <div class="kpi-icon">${k.icon}</div>
@@ -266,7 +241,6 @@ async function loadProfils() {
       <div class="kpi-label">${k.label}</div>
     </div>
   `).join("");
-
   const moy_rep  = data.repondeurs?.moyenne;
   const moy_tous = data.tous?.moyenne;
   let insight    = "";
@@ -282,10 +256,8 @@ async function loadProfils() {
     insight += ` Tes leads signés ont en moyenne <strong style="color:var(--yellow)">${fmt_num(data.signes.moyenne)} abonnés</strong>.`;
   }
   document.getElementById("profils-insight").innerHTML = insight;
-
   const tranches = data.tranches || {};
   const maxTaux  = Math.max(...Object.values(tranches).map(t => t.taux), 1);
-
   document.getElementById("profils-tranches").innerHTML = Object.entries(tranches).map(([tranche, val]) => {
     const pct   = Math.round((val.taux / Math.max(maxTaux, 1)) * 100);
     const color = val.taux >= 30 ? "var(--green)" : val.taux >= 15 ? "var(--yellow)" : "#667eea";
@@ -302,7 +274,6 @@ async function loadProfils() {
       </div>
     `;
   }).join("");
-
   document.getElementById("profils-table").innerHTML = renderTable(
     ["Tranche followers", "Leads contactés", "Réponses", "Taux"],
     Object.entries(tranches).map(([tranche, val]) => `
@@ -315,16 +286,13 @@ async function loadProfils() {
     `)
   );
 }
-
 // ── Tab switch ───────────────────────────────────────────────────────────────
-
 window.switchPerfTab = function(tab) {
   document.querySelectorAll(".perf-tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".perf-panel").forEach(p => p.classList.remove("active"));
   document.getElementById(`tab-${tab}`).classList.add("active");
   document.getElementById(`panel-${tab}`).classList.add("active");
 };
-
 window.initStats = async function() {
   await Promise.all([loadDM(), loadComptes(), loadNiches(), loadTendances(), loadProfils()]);
 };
