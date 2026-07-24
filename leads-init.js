@@ -16,6 +16,8 @@ const NICHES = {
   cosplay:      "🎨 Cosplay",
 };
 
+const COMPTES_IG = ["@Popsy.Mel", "@Ceo.Maxime"];
+
 let page = 0, total = 0, currentId = null, debounce = null;
 const LIMIT = 20;
 
@@ -88,6 +90,103 @@ function updatePagination() {
   document.getElementById("next-btn").disabled     = (page + 1) * LIMIT >= total;
 }
 
+// ── Popup choix compte IG ────────────────────────────────────────────────────
+
+function showComptePopup(onConfirm) {
+  const existing = document.getElementById("compte-popup");
+  if (existing) existing.remove();
+
+  const popup = document.createElement("div");
+  popup.id = "compte-popup";
+  popup.style.cssText = `
+    position:fixed;inset:0;z-index:2000;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+  `;
+
+  popup.innerHTML = `
+    <div style="
+      background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;
+      padding:28px;width:320px;max-width:90%;
+    ">
+      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">📱 Depuis quel compte ?</div>
+      <div style="font-size:12px;color:#555;margin-bottom:20px;">Choisis le compte Instagram utilisé pour ce DM</div>
+      <div id="compte-popup-buttons" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        ${COMPTES_IG.map(c => `
+          <button data-compte="${c}" style="
+            background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
+            padding:10px 16px;color:#e0e0ff;font-size:14px;font-weight:600;
+            cursor:pointer;text-align:left;transition:border-color 0.2s;
+          ">${c}</button>
+        `).join("")}
+        <button data-compte="__autre__" style="
+          background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
+          padding:10px 16px;color:#555;font-size:13px;
+          cursor:pointer;text-align:left;
+        ">➕ Autre compte...</button>
+      </div>
+      <div id="autre-compte-wrap" style="display:none;margin-bottom:12px;">
+        <input type="text" id="autre-compte-input" placeholder="@NouveauCompte" style="
+          width:100%;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
+          padding:8px 12px;color:#e0e0ff;font-size:13px;outline:none;
+          box-sizing:border-box;
+        ">
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="compte-popup-cancel" style="
+          flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
+          padding:9px;color:#555;font-size:13px;cursor:pointer;
+        ">Annuler</button>
+        <button id="compte-popup-confirm" style="
+          flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:8px;
+          padding:9px;color:white;font-size:13px;font-weight:700;cursor:pointer;
+        ">Confirmer →</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(popup);
+
+  let selectedCompte = null;
+
+  popup.querySelectorAll("[data-compte]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      popup.querySelectorAll("[data-compte]").forEach(b => {
+        b.style.borderColor = "#2a2a45";
+        b.style.color = b.dataset.compte === "__autre__" ? "#555" : "#e0e0ff";
+      });
+      if (btn.dataset.compte === "__autre__") {
+        document.getElementById("autre-compte-wrap").style.display = "block";
+        selectedCompte = "__autre__";
+      } else {
+        document.getElementById("autre-compte-wrap").style.display = "none";
+        selectedCompte = btn.dataset.compte;
+      }
+      btn.style.borderColor = "#667eea";
+      btn.style.color = "#667eea";
+    });
+  });
+
+  document.getElementById("compte-popup-cancel").addEventListener("click", () => {
+    popup.remove();
+  });
+
+  document.getElementById("compte-popup-confirm").addEventListener("click", () => {
+    let compte = selectedCompte;
+    if (compte === "__autre__") {
+      compte = document.getElementById("autre-compte-input").value.trim();
+      if (!compte) return;
+      if (!compte.startsWith("@")) compte = "@" + compte;
+      if (!COMPTES_IG.includes(compte)) COMPTES_IG.push(compte);
+    }
+    if (!compte) return;
+    popup.remove();
+    onConfirm(compte);
+  });
+}
+
+// ── Modal lead ───────────────────────────────────────────────────────────────
+
 async function openLead(id) {
   currentId    = id;
   const lead   = await getLead(id);
@@ -95,7 +194,7 @@ async function openLead(id) {
   const retard = getRetard(lead.date_relance);
   const heureDM = lead.heure_dm || extractHeure(lead.date_contact);
 
-  const comptesBase = ["@Popsy.Mel", "@Ceo.Maxime"];
+  const comptesBase = [...COMPTES_IG];
   if (lead.compte_ig && !comptesBase.includes(lead.compte_ig)) {
     comptesBase.push(lead.compte_ig);
   }
@@ -180,13 +279,13 @@ async function openLead(id) {
 
     <div class="modal-section">
       <div class="detail-label">⏰ Heure de réponse reçue</div>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
         <input type="time" id="heure-reponse-input"
           value="${lead.heure_reponse || ""}"
-          style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;outline:none;">
+          style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;flex:1;">
         <button id="save-heure-reponse"
-          style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);font-size:12px;cursor:pointer;">
-          Sauver
+          style="background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:6px;padding:8px 14px;color:white;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
+          💾 Sauver
         </button>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:4px;">Entre l'heure à laquelle elle t'a répondu sur IG</div>
@@ -197,7 +296,7 @@ async function openLead(id) {
       <div class="statut-buttons">
         ${Object.entries(STATUTS).map(([key, val]) => `
           <button class="btn-statut ${lead.statut === key ? "active" : ""}" style="--color:${val.color}"
-            onclick="window._changeStatutL('${key}')">${val.label}</button>
+            data-statut="${key}">${val.label}</button>
         `).join("")}
       </div>
     </div>
@@ -211,6 +310,7 @@ async function openLead(id) {
     </div>
   `;
 
+  // Compte IG select
   document.getElementById("compte-ig-select").addEventListener("change", (e) => {
     document.getElementById("nouveau-compte-wrap").style.display =
       e.target.value === "__nouveau__" ? "block" : "none";
@@ -230,23 +330,51 @@ async function openLead(id) {
     if (btn) {
       btn.textContent = "✅";
       btn.style.color = "var(--green)";
-      setTimeout(() => { openLead(currentId); }, 1200);
+      setTimeout(() => openLead(currentId), 1200);
     }
   });
 
-  document.getElementById("save-heure-reponse").addEventListener("click", async () => {
+  // Heure réponse — event listener direct sur le bouton
+  const btnHeure = document.getElementById("save-heure-reponse");
+  btnHeure.addEventListener("click", async function() {
     const input = document.getElementById("heure-reponse-input");
-    if (!input || !input.value) return;
-    await updateLead(currentId, { heure_reponse: input.value });
-    const btn = document.getElementById("save-heure-reponse");
-    if (btn) {
-      btn.textContent = "✅ Sauvé";
-      btn.style.color = "var(--green)";
-      btn.style.borderColor = "var(--green)";
-      setTimeout(() => { openLead(currentId); }, 1500);
+    if (!input || !input.value) {
+      input.style.borderColor = "#ef5350";
+      return;
+    }
+    const val = input.value;
+    this.textContent = "...";
+    this.disabled    = true;
+    try {
+      await updateLead(currentId, { heure_reponse: val });
+      this.textContent    = "✅ Sauvé !";
+      this.style.background = "var(--green)";
+      setTimeout(() => openLead(currentId), 1500);
+    } catch(e) {
+      this.textContent = "❌ Erreur";
+      this.disabled    = false;
     }
   });
 
+  // Statut buttons
+  document.querySelectorAll(".btn-statut[data-statut]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const statut = btn.dataset.statut;
+      if (statut === "contacte") {
+        showComptePopup(async (compte) => {
+          await updateLead(currentId, { statut, compte_ig: compte });
+          window.closeModal();
+          loadLeads();
+        });
+      } else {
+        await updateLead(currentId, { statut });
+        window.closeModal();
+        loadLeads();
+      }
+    });
+  });
+
+  // Note
   document.getElementById("save-note-btn").addEventListener("click", async () => {
     const note = document.getElementById("note-input").value.trim();
     if (!note) return;
@@ -257,14 +385,10 @@ async function openLead(id) {
 
 window._openLeadL = openLead;
 
-window._changeStatutL = async (statut) => {
-  await updateLead(currentId, { statut });
-  window.closeModal();
-  loadLeads();
-};
-
 window.closeModal = () => {
   document.getElementById("modal").classList.add("hidden");
+  const popup = document.getElementById("compte-popup");
+  if (popup) popup.remove();
   currentId = null;
 };
 
