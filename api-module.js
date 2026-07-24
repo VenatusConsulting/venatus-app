@@ -1,13 +1,14 @@
 const API = "https://venatus-api.onrender.com";
 
-export async function getStats()          { return fetch(`${API}/stats`).then(r => r.json()); }
-export async function getGoal()           { return fetch(`${API}/goal`).then(r => r.json()); }
-export async function getRelances()       { return fetch(`${API}/leads/relances`).then(r => r.json()); }
-export async function getStatsDM()        { return fetch(`${API}/stats/dm`).then(r => r.json()); }
-export async function getStatsComptes()   { return fetch(`${API}/stats/comptes`).then(r => r.json()); }
-export async function getStatsNiches()    { return fetch(`${API}/stats/niches`).then(r => r.json()); }
-export async function getStatsTendances() { return fetch(`${API}/stats/tendances`).then(r => r.json()); }
-export async function getStatsProfils()   { return fetch(`${API}/stats/profils`).then(r => r.json()); }
+export async function getStats()            { return fetch(`${API}/stats`).then(r => r.json()); }
+export async function getGoal()             { return fetch(`${API}/goal`).then(r => r.json()); }
+export async function getRelances()         { return fetch(`${API}/leads/relances`).then(r => r.json()); }
+export async function getStatsDM()          { return fetch(`${API}/stats/dm`).then(r => r.json()); }
+export async function getStatsComptes()     { return fetch(`${API}/stats/comptes`).then(r => r.json()); }
+export async function getStatsNiches()      { return fetch(`${API}/stats/niches`).then(r => r.json()); }
+export async function getStatsTendances()   { return fetch(`${API}/stats/tendances`).then(r => r.json()); }
+export async function getStatsProfils()     { return fetch(`${API}/stats/profils`).then(r => r.json()); }
+export async function getStatsTiming()      { return fetch(`${API}/stats/timing`).then(r => r.json()); }
 
 export async function getLeads(params = {}) {
   return fetch(`${API}/leads?${new URLSearchParams(params)}`).then(r => r.json());
@@ -28,4 +29,7 @@ export async function addNote(id, note) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ note })
   }).then(r => r.json());
+}
+export async function incrementRelance(id) {
+  return fetch(`${API}/leads/${id}/relance`, { method: "POST" }).then(r => r.json());
 }
