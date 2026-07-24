@@ -29,6 +29,7 @@
         <button class="perf-tab"        id="tab-tendances" onclick="switchPerfTab('tendances')">📅 Tendances</button>
         <button class="perf-tab"        id="tab-profils"   onclick="switchPerfTab('profils')">👥 Profils</button>
         <button class="perf-tab"        id="tab-timing"    onclick="switchPerfTab('timing')">⏰ Timing</button>
+        <button class="perf-tab"        id="tab-sources"   onclick="switchPerfTab('sources')">📡 Sources</button>
         <button class="perf-tab"        id="tab-croise"    onclick="switchPerfTab('croise')">🔀 Vue globale</button>
       </div>
 
@@ -78,25 +79,20 @@
         <div class="card"><div class="card-header"><h2>📊 Distribution des relances</h2></div><div id="timing-distrib"></div></div>
       </div>
 
+      <!-- Sources -->
+      <div class="perf-panel" id="panel-sources">
+        <div class="card" id="sources-best"></div>
+        <div class="card"><div class="card-header"><h2>📊 Taux de conversion par source</h2></div><div id="sources-bars"></div></div>
+        <div class="card"><div class="card-header"><h2>Tableau détaillé</h2></div><div id="sources-table"></div></div>
+      </div>
+
       <!-- Vue globale -->
       <div class="perf-panel" id="panel-croise">
         <div class="card" id="croise-ideal"></div>
-        <div class="card">
-          <div class="card-header"><h2>💬 DM × Niche — Taux de réponse</h2></div>
-          <div id="croise-dm-niche"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>👥 Tranche followers × Heure d'envoi</h2></div>
-          <div id="croise-tranches-heures"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>📱 Compte IG × Niche</h2></div>
-          <div id="croise-compte-niche"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h2>📱 Compte IG × Tranche followers</h2></div>
-          <div id="croise-compte-tranche"></div>
-        </div>
+        <div class="card"><div class="card-header"><h2>💬 DM × Niche — Taux de réponse</h2></div><div id="croise-dm-niche"></div></div>
+        <div class="card"><div class="card-header"><h2>👥 Tranche followers × Heure d'envoi</h2></div><div id="croise-tranches-heures"></div></div>
+        <div class="card"><div class="card-header"><h2>📱 Compte IG × Niche</h2></div><div id="croise-compte-niche"></div></div>
+        <div class="card"><div class="card-header"><h2>📱 Compte IG × Tranche followers</h2></div><div id="croise-compte-tranche"></div></div>
       </div>
 
     </div>
