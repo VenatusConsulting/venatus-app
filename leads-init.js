@@ -16,6 +16,13 @@ const NICHES = {
   cosplay:      "🎨 Cosplay",
 };
 
+const DM_TEMPLATES = {
+  dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗",              color: "#667eea" },
+  dm2: { label: "DM 2 — Girl energy",          text: "idk why but you just have THAT girl energy 💅✨", color: "#f59e0b" },
+  dm3: { label: "DM 3 — Feed + question",      text: "I love your feed 😍 how long have you been posting?", color: "#10b981" },
+  dm4: { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀",        color: "#ec4899" },
+};
+
 const COMPTES_IG = ["@Popsy.Mel", "@Ceo.Maxime"];
 
 let page = 0, total = 0, currentId = null, debounce = null;
@@ -95,6 +102,8 @@ function removePopup() {
   if (p) p.remove();
 }
 
+// ── Popup choix compte IG ────────────────────────────────────────────────────
+
 function showComptePopup(onConfirm) {
   removePopup();
   const popup = document.createElement("div");
@@ -135,7 +144,7 @@ function showComptePopup(onConfirm) {
         <button id="popup-confirm" style="
           flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;
           border-radius:8px;padding:9px;color:white;font-size:13px;font-weight:700;cursor:pointer;
-        ">Confirmer →</button>
+        ">Suivant →</button>
       </div>
     </div>
   `;
@@ -176,11 +185,109 @@ function showComptePopup(onConfirm) {
   });
 }
 
+// ── Popup choix DM ───────────────────────────────────────────────────────────
+
+function showDMPopup(pseudo, onConfirm) {
+  removePopup();
+  const popup = document.createElement("div");
+  popup.id = "action-popup";
+  popup.style.cssText = `
+    position:fixed;inset:0;z-index:2000;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);
+  `;
+  popup.innerHTML = `
+    <div style="background:#0d0d1a;border:1px solid #2a2a45;border-radius:16px;padding:28px;width:380px;max-width:90%;">
+      <div style="font-size:16px;font-weight:700;color:#e0e0ff;margin-bottom:4px;">💬 Quel DM envoies-tu ?</div>
+      <div style="font-size:12px;color:#555;margin-bottom:20px;">Choisis le template — il sera copié automatiquement</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+        ${Object.entries(DM_TEMPLATES).map(([key, dm]) => `
+          <button data-dm="${key}" class="popup-dm-btn" style="
+            background:#0f0f1e;border:1px solid #2a2a45;border-radius:10px;
+            padding:12px 16px;color:#e0e0ff;font-size:13px;
+            cursor:pointer;text-align:left;transition:all 0.2s;
+          ">
+            <div style="font-weight:600;color:${dm.color};margin-bottom:4px;">${dm.label}</div>
+            <div style="font-size:12px;color:#555;font-style:italic;">"${dm.text}"</div>
+          </button>
+        `).join("")}
+      </div>
+      <div id="dm-preview" style="
+        display:none;
+        background:#0f0f1e;border:1px solid #2a2a45;border-radius:10px;
+        padding:14px 16px;margin-bottom:16px;
+      ">
+        <div style="font-size:11px;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">📋 Message à copier</div>
+        <div id="dm-preview-text" style="font-size:15px;color:#e0e0ff;font-weight:500;"></div>
+        <button id="copy-dm-btn" style="
+          margin-top:10px;background:rgba(102,126,234,0.15);border:1px solid rgba(102,126,234,0.4);
+          border-radius:6px;padding:6px 14px;color:#667eea;font-size:12px;font-weight:600;cursor:pointer;
+        ">📋 Copier</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="popup-cancel" style="
+          flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
+          padding:11px;color:#555;font-size:13px;cursor:pointer;
+        ">Annuler</button>
+        <button id="popup-confirm" style="
+          flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;
+          border-radius:8px;padding:11px;color:white;font-size:13px;font-weight:700;
+          cursor:pointer;opacity:0.4;pointer-events:none;
+        " disabled>✅ Confirmer contacté</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(popup);
+
+  let selectedDM = null;
+
+  popup.querySelectorAll(".popup-dm-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      popup.querySelectorAll(".popup-dm-btn").forEach(b => {
+        b.style.borderColor = "#2a2a45";
+        b.style.background  = "#0f0f1e";
+      });
+      btn.style.borderColor = DM_TEMPLATES[btn.dataset.dm].color;
+      btn.style.background  = `${DM_TEMPLATES[btn.dataset.dm].color}18`;
+      selectedDM = btn.dataset.dm;
+
+      // Affiche preview
+      const preview = document.getElementById("dm-preview");
+      const previewText = document.getElementById("dm-preview-text");
+      preview.style.display    = "block";
+      previewText.textContent  = DM_TEMPLATES[selectedDM].text;
+
+      // Active le bouton confirmer
+      const confirm = document.getElementById("popup-confirm");
+      confirm.disabled             = false;
+      confirm.style.opacity        = "1";
+      confirm.style.pointerEvents  = "auto";
+    });
+  });
+
+  document.getElementById("copy-dm-btn")?.addEventListener("click", () => {
+    if (!selectedDM) return;
+    navigator.clipboard.writeText(DM_TEMPLATES[selectedDM].text).then(() => {
+      const btn = document.getElementById("copy-dm-btn");
+      if (btn) { btn.textContent = "✅ Copié !"; setTimeout(() => { btn.textContent = "📋 Copier"; }, 1500); }
+    });
+  });
+
+  document.getElementById("popup-cancel").addEventListener("click", removePopup);
+  document.getElementById("popup-confirm").addEventListener("click", () => {
+    if (!selectedDM) return;
+    removePopup();
+    onConfirm(selectedDM);
+  });
+}
+
+// ── Popup heure de réponse ───────────────────────────────────────────────────
+
 function showHeureReponsePopup(onConfirm) {
   removePopup();
-  const now = new Date();
-  const hh  = String(now.getHours()).padStart(2, "0");
-  const mm  = String(now.getMinutes()).padStart(2, "0");
+  const now    = new Date();
+  const hh     = String(now.getHours()).padStart(2, "0");
+  const mm     = String(now.getMinutes()).padStart(2, "0");
 
   const popup = document.createElement("div");
   popup.id = "action-popup";
@@ -196,45 +303,28 @@ function showHeureReponsePopup(onConfirm) {
     ">
       <div style="font-size:16px;font-weight:700;color:#e0e0ff;margin-bottom:4px;">💬 Elle a répondu !</div>
       <div style="font-size:12px;color:#555;margin-bottom:24px;">À quelle heure elle t'a répondu sur Instagram ?</div>
-
       <div style="
         background:#0f0f1e;border:1px solid #2a2a45;border-radius:12px;
         padding:20px;text-align:center;margin-bottom:8px;
       ">
         <div style="font-size:11px;color:#555;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px;">Heure de réponse</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
-          <input
-            type="number"
-            id="input-hh"
-            value="${hh}"
-            min="0" max="23"
-            style="
-              background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
-              padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;
-              text-align:center;outline:none;width:72px;
-              -moz-appearance:textfield;
-            "
-          >
+          <input type="number" id="input-hh" value="${hh}" min="0" max="23" style="
+            background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
+            padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;
+            text-align:center;outline:none;width:72px;-moz-appearance:textfield;
+          ">
           <span style="font-size:32px;font-weight:700;color:#667eea;line-height:1;">:</span>
-          <input
-            type="number"
-            id="input-mm"
-            value="${mm}"
-            min="0" max="59"
-            style="
-              background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
-              padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;
-              text-align:center;outline:none;width:72px;
-              -moz-appearance:textfield;
-            "
-          >
+          <input type="number" id="input-mm" value="${mm}" min="0" max="59" style="
+            background:#1a1a2e;border:1px solid #667eea;border-radius:8px;
+            padding:10px 0;color:#e0e0ff;font-size:32px;font-weight:700;
+            text-align:center;outline:none;width:72px;-moz-appearance:textfield;
+          ">
         </div>
       </div>
-
       <div style="font-size:11px;color:#444;text-align:center;margin-bottom:20px;">
         Pré-rempli avec l'heure actuelle — modifie si besoin
       </div>
-
       <div style="display:flex;gap:8px;">
         <button id="popup-cancel" style="
           flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;
@@ -252,31 +342,25 @@ function showHeureReponsePopup(onConfirm) {
   const inputHH = document.getElementById("input-hh");
   const inputMM = document.getElementById("input-mm");
 
-  // Auto-format : max 2 chiffres, range correct
   inputHH.addEventListener("input", () => {
     let v = parseInt(inputHH.value);
     if (isNaN(v)) return;
     if (v > 23) inputHH.value = 23;
     if (v < 0)  inputHH.value = 0;
   });
-
   inputMM.addEventListener("input", () => {
     let v = parseInt(inputMM.value);
     if (isNaN(v)) return;
     if (v > 59) inputMM.value = 59;
     if (v < 0)  inputMM.value = 0;
   });
-
-  // Passe aux minutes automatiquement après 2 chiffres
   inputHH.addEventListener("keyup", (e) => {
     if (inputHH.value.length >= 2 && e.key !== "Backspace") {
-      inputMM.focus();
-      inputMM.select();
+      inputMM.focus(); inputMM.select();
     }
   });
 
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
-
   document.getElementById("popup-confirm").addEventListener("click", () => {
     const h = String(parseInt(inputHH.value) || 0).padStart(2, "0");
     const m = String(parseInt(inputMM.value) || 0).padStart(2, "0");
@@ -284,6 +368,9 @@ function showHeureReponsePopup(onConfirm) {
     onConfirm(`${h}:${m}`);
   });
 }
+
+// ── Modal lead ───────────────────────────────────────────────────────────────
+
 async function openLead(id) {
   currentId    = id;
   const lead   = await getLead(id);
@@ -325,15 +412,15 @@ async function openLead(id) {
           <span class="detail-label">Contacté le</span>
           <span>${lead.date_contact}${heureDM ? ` <span style="color:var(--text3);font-size:11px;">🕐 ${heureDM}</span>` : ""}</span>
         </div>` : ""}
+      ${lead.dm_utilise ? `
+        <div class="detail-row">
+          <span class="detail-label">DM utilisé</span>
+          <span style="color:${DM_TEMPLATES[lead.dm_utilise]?.color}">${DM_TEMPLATES[lead.dm_utilise]?.label || lead.dm_utilise.toUpperCase()}</span>
+        </div>` : ""}
       ${lead.heure_reponse ? `
         <div class="detail-row">
           <span class="detail-label">Heure de réponse</span>
           <span style="color:var(--green)">💬 ${lead.heure_reponse}</span>
-        </div>` : ""}
-      ${lead.dm_utilise ? `
-        <div class="detail-row">
-          <span class="detail-label">DM utilisé</span>
-          <span>${lead.dm_utilise.toUpperCase()}</span>
         </div>` : ""}
       <div class="detail-row">
         <span class="detail-label">Compte IG</span>
@@ -419,18 +506,25 @@ async function openLead(id) {
   document.querySelectorAll(".btn-statut[data-statut]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const statut = btn.dataset.statut;
+
       if (statut === "contacte") {
-        showComptePopup(async (compte) => {
-          await updateLead(currentId, { statut, compte_ig: compte });
-          window.closeModal();
-          loadLeads();
+        // 1. Popup compte IG
+        showComptePopup((compte) => {
+          // 2. Popup choix DM
+          showDMPopup(currentId, async (dm) => {
+            await updateLead(currentId, { statut, compte_ig: compte, dm_utilise: dm });
+            window.closeModal();
+            loadLeads();
+          });
         });
+
       } else if (statut === "en_discussion") {
         showHeureReponsePopup(async (heure) => {
           await updateLead(currentId, { statut, heure_reponse: heure });
           window.closeModal();
           loadLeads();
         });
+
       } else {
         await updateLead(currentId, { statut });
         window.closeModal();
