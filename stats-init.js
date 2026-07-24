@@ -293,7 +293,7 @@ async function loadProfils() {
     const diff = moy_rep > moy_tous ? "plus gros" : "plus petits";
     insight = `Les profils qui répondent ont en moyenne <strong style="color:var(--green)">${fmt_num(moy_rep)} abonnés</strong> — des comptes ${diff} que la moyenne de tes leads (${fmt_num(moy_tous)}).`;
   } else if (moy_tous) {
-    insight = `Tu as des données sur ${data.tous?.count} leads avec une moyenne de <strong style="color:var(--purple)">${fmt_num(moy_tous)} abonnés</strong>. Continue à renseigner les abonnés pour voir qui répond le mieux.`;
+    insight = `Tu as des données sur ${data.tous?.count} leads avec une moyenne de <strong style="color:var(--purple)">${fmt_num(moy_tous)} abonnés</strong>.`;
   } else {
     insight = "Pas encore assez de données. Renseigne les abonnés de tes leads pour voir les insights.";
   }
@@ -343,46 +343,53 @@ async function loadTiming() {
   const totalReponses = data.heures_reponse.reduce((a, b) => a + b, 0);
   const hasData       = totalEnvoyes > 0;
 
-  // Meilleure heure
-  let meilleure = data.taux_par_heure.find(h => h.taux > 0 && h.envoyes >= 2);
-  if (!meilleure) {
-    meilleure = data.taux_par_heure.reduce(
-      (best, h) => h.envoyes > best.envoyes ? h : best,
-      { heure: 0, envoyes: 0, reponses: 0, taux: 0 }
-    );
-  }
+  // Heure où tu envoies le plus
+  const bestEnvoi = data.taux_par_heure.reduce(
+    (best, h) => h.envoyes > best.envoyes ? h : best,
+    { heure: 0, envoyes: 0, reponses: 0, taux: 0 }
+  );
+
+  // Heure où tu reçois le plus de réponses
+  const bestReponse = data.heures_reponse.reduce(
+    (best, v, h) => v > best.count ? { heure: h, count: v } : best,
+    { heure: 0, count: 0 }
+  );
+
+  // Meilleur taux
+  const bestTaux = data.taux_par_heure.reduce(
+    (best, h) => (h.taux > best.taux && h.envoyes >= 2) ? h : best,
+    { heure: 0, envoyes: 0, reponses: 0, taux: 0 }
+  );
 
   document.getElementById("timing-best-card").innerHTML = hasData ? `
-    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-      <div style="font-size:32px;">⏰</div>
-      <div style="flex:1;">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">
-          ${meilleure.taux > 0 ? "Meilleure heure d'envoi" : "Heure la plus active"}
-        </div>
-        <div style="font-size:28px;font-weight:700;color:var(--purple)">${fmt_heure(meilleure.heure)}</div>
-        <div style="margin-top:8px;display:flex;gap:16px;font-size:13px;flex-wrap:wrap;">
-          <span style="color:var(--text2)">📨 <strong>${meilleure.envoyes}</strong> DMs envoyés</span>
-          <span style="color:var(--green)">💬 <strong>${meilleure.reponses}</strong> réponses</span>
-          ${meilleure.taux > 0
-            ? `<span style="color:var(--yellow)">🔥 <strong>${meilleure.taux}%</strong> taux</span>`
-            : `<span style="color:var(--text3);font-size:12px;">Ajoute des heures de réponse pour voir le taux</span>`
-          }
-        </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:${bestTaux.taux > 0 ? '12px' : '0'};">
+      <div style="background:var(--bg3);border:1px solid rgba(102,126,234,0.3);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📨 Tu envoies le plus à</div>
+        <div style="font-size:32px;font-weight:700;color:var(--purple)">${fmt_heure(bestEnvoi.heure)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px;">${bestEnvoi.envoyes} DMs envoyés</div>
       </div>
-      <div style="
-        background:var(--bg3);border:1px solid var(--border2);border-radius:10px;
-        padding:12px 16px;text-align:center;
-      ">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Réponses trackées</div>
-        <div style="font-size:22px;font-weight:700;color:var(--green)">${totalReponses}</div>
+      <div style="background:var(--bg3);border:1px solid rgba(76,175,80,0.3);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">💬 Elles répondent le plus à</div>
+        <div style="font-size:32px;font-weight:700;color:var(--green)">${fmt_heure(bestReponse.heure)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px;">${bestReponse.count} réponses sur ${totalReponses} au total</div>
       </div>
     </div>
+    ${bestTaux.taux > 0 ? `
+      <div style="padding:12px 16px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:13px;color:var(--yellow);">
+        🔥 Meilleur taux : <strong>${bestTaux.taux}%</strong> de réponse pour les DMs envoyés à <strong>${fmt_heure(bestTaux.heure)}</strong>
+        (${bestTaux.reponses} réponse${bestTaux.reponses > 1 ? "s" : ""} sur ${bestTaux.envoyes} envois)
+      </div>
+    ` : `
+      <div style="padding:10px 14px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text3);">
+        💡 Continue à renseigner les heures de réponse pour voir quel créneau convertit le mieux
+      </div>
+    `}
   ` : `<div class="empty">Pas encore de données — envoie des DMs pour voir les stats</div>`;
 
   // Graphique envois
   document.getElementById("timing-envoi").innerHTML = renderHourBars(data.heures_envoi, "var(--purple)");
 
-  // Graphique réponses — utilise le max global pour que les barres soient visibles
+  // Graphique réponses
   const maxRep = Math.max(...data.heures_reponse, 1);
   document.getElementById("timing-reponse").innerHTML = `
     <div class="hour-chart">
