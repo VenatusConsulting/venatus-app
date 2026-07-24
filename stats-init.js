@@ -1,4 +1,4 @@
-import { getStatsDM, getStatsComptes, getStatsNiches, getStatsTendances, getStatsProfils, getStatsTiming, getStatsCroise } from "./api-module.js";
+import { getStatsDM, getStatsComptes, getStatsNiches, getStatsTendances, getStatsProfils, getStatsTiming, getStatsSources, getStatsCroise } from "./api-module.js";
 
 const DM_TEMPLATES_TEXT = {
   dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗" },
@@ -12,6 +12,13 @@ const DM_LABELS     = { dm1: "DM 1", dm2: "DM 2", dm3: "DM 3", dm4: "DM 4" };
 const NICHE_LABELS  = { influenceuse: "💋 Influenceuse", fitness: "💪 Fitness", gaming: "🎮 Gaming", cosplay: "🎨 Cosplay" };
 const NICHE_COLORS  = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
 const COMPTE_COLORS = ["#667eea","#f59e0b","#10b981","#ec4899","#29b6f6","#8b5cf6"];
+const SOURCE_COLORS = {
+  dork:                  "#667eea",
+  instagram_abonnements: "#ec4899",
+  instagram_reels:       "#f59e0b",
+  tiktok:                "#10b981",
+  manuel:                "#29b6f6",
+};
 
 function taux_color(taux) {
   if (taux >= 30) return "var(--green)";
@@ -112,7 +119,7 @@ async function loadDM() {
   const data    = await getStatsDM();
   const entries = Object.entries(data);
   if (!entries.length) return;
-  const best = entries.reduce((a, b) => b[1].taux > a[1].taux ? b : a, entries[0]);
+  const best  = entries.reduce((a, b) => b[1].taux > a[1].taux ? b : a, entries[0]);
   const [key, b] = best;
 
   document.getElementById("best-dm-card").innerHTML = `
@@ -456,12 +463,88 @@ async function loadTiming() {
   `).join("");
 }
 
+// ── Sources ──────────────────────────────────────────────────────────────────
+
+async function loadSources() {
+  const data    = await getStatsSources();
+  const hasData = data.some(s => s.total > 0);
+
+  if (!hasData) {
+    ["sources-best","sources-bars","sources-table"].forEach(id =>
+      document.getElementById(id).innerHTML = '<div class="empty">Pas encore de données — renseigne la source de tes leads dans la fiche lead</div>'
+    );
+    return;
+  }
+
+  const best = data.filter(s => s.contacte > 0).sort((a,b) => b.taux_rep - a.taux_rep)[0];
+  if (best) {
+    document.getElementById("sources-best").innerHTML = `
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="font-size:32px;">🏆</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Meilleure source</div>
+          <div style="font-size:22px;font-weight:700;color:${SOURCE_COLORS[best.source]}">${best.label}</div>
+          <div style="margin-top:8px;display:flex;gap:14px;font-size:13px;flex-wrap:wrap;">
+            <span style="color:var(--text2)">📋 <strong>${best.total}</strong> leads</span>
+            <span style="color:var(--text2)">📨 <strong>${best.contacte}</strong> contactés</span>
+            <span style="color:var(--green)">💬 <strong>${best.reponses}</strong> réponses</span>
+            <span style="color:var(--yellow)">✅ <strong>${best.signes}</strong> signés</span>
+            <span style="color:var(--purple)">🔥 <strong>${best.taux_rep}%</strong> taux réponse</span>
+            ${best.tps_moyen !== null ? `<span style="color:var(--text3)">⏱️ ${best.tps_moyen}j avant signature</span>` : ""}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const maxTaux = Math.max(...data.map(s => s.taux_rep), 1);
+  document.getElementById("sources-bars").innerHTML = data.map(s => {
+    const pct   = Math.round((s.taux_rep / maxTaux) * 100);
+    const color = SOURCE_COLORS[s.source] || "#667eea";
+    return `
+      <div class="dm-bar-row">
+        <div class="dm-bar-label">${s.label}</div>
+        <div class="dm-bar-wrap">
+          <div class="dm-bar-bg">
+            <div class="dm-bar-fill" style="width:${pct}%;background:${color}"></div>
+            <span class="dm-bar-count">${s.taux_rep}%</span>
+          </div>
+        </div>
+        <div class="dm-bar-info">${s.reponses}/${s.contacte}</div>
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("sources-table").innerHTML = `
+    <table class="dm-table">
+      <thead>
+        <tr>
+          <th>Source</th><th>Leads</th><th>Contactés</th><th>Réponses</th>
+          <th>Signés</th><th>Taux réponse</th><th>Taux signature</th><th>⏱️ Closing</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map((s, i) => `
+          <tr>
+            <td style="color:${SOURCE_COLORS[s.source]};font-weight:600;">${s.label}</td>
+            <td>${s.total}</td><td>${s.contacte}</td><td>${s.reponses}</td><td>${s.signes}</td>
+            <td><span style="color:${taux_color(s.taux_rep)};font-weight:700;">${s.taux_rep}%</span></td>
+            <td><span style="color:${taux_color(s.taux_sig)};font-weight:700;">${s.taux_sig}%</span></td>
+            <td>${s.tps_moyen !== null ? s.tps_moyen + "j" : "—"}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
 // ── Vue globale croisée ──────────────────────────────────────────────────────
 
 async function loadCroise() {
-  const data = await getStatsCroise();
+  const data  = await getStatsCroise();
+  const niches = ["influenceuse","fitness","gaming","cosplay"];
+  const dms    = ["dm1","dm2","dm3","dm4"];
 
-  // Profil idéal
   const ideal = data.profil_ideal || [];
   document.getElementById("croise-ideal").innerHTML = ideal.length ? `
     <div style="margin-bottom:16px;">
@@ -469,13 +552,7 @@ async function loadCroise() {
       <div style="font-size:12px;color:var(--text3);">Minimum 2 envois pour apparaître</div>
     </div>
     ${ideal.map((item, i) => `
-      <div style="
-        display:flex;align-items:center;gap:14px;
-        padding:12px 16px;
-        background:var(--bg3);
-        border:1px solid ${item.taux >= 30 ? 'rgba(76,175,80,0.3)' : item.taux >= 15 ? 'rgba(245,158,11,0.2)' : 'var(--border2)'};
-        border-radius:10px;margin-bottom:8px;
-      ">
+      <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg3);border:1px solid ${item.taux >= 30 ? 'rgba(76,175,80,0.3)' : item.taux >= 15 ? 'rgba(245,158,11,0.2)' : 'var(--border2)'};border-radius:10px;margin-bottom:8px;">
         <div style="font-size:20px;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'🏅'}</div>
         <div style="flex:1;">
           <div style="font-size:13px;font-weight:600;margin-bottom:4px;">
@@ -488,19 +565,12 @@ async function loadCroise() {
             ${item.moy_abonnes > 0 ? ` · 👥 ~${fmt_num(item.moy_abonnes)} abonnés en moyenne` : ""}
           </div>
         </div>
-        <div style="
-          font-size:20px;font-weight:700;
-          color:${taux_color(item.taux)};
-          background:${item.taux >= 30 ? 'rgba(76,175,80,0.1)' : item.taux >= 15 ? 'rgba(245,158,11,0.1)' : 'var(--bg3)'};
-          border-radius:8px;padding:6px 12px;
-        ">${item.taux}%</div>
+        <div style="font-size:20px;font-weight:700;color:${taux_color(item.taux)};background:${item.taux >= 30 ? 'rgba(76,175,80,0.1)' : item.taux >= 15 ? 'rgba(245,158,11,0.1)' : 'var(--bg3)'};border-radius:8px;padding:6px 12px;">${item.taux}%</div>
       </div>
     `).join("")}
   ` : `<div class="empty">Pas encore assez de données — continue à envoyer des DMs en renseignant niche et DM utilisé</div>`;
 
-  // Matrice DM x Niche
-  const niches  = ["influenceuse","fitness","gaming","cosplay"];
-  const dms     = ["dm1","dm2","dm3","dm4"];
+  // DM x Niche
   const dmNiche = data.dm_niche || {};
   document.getElementById("croise-dm-niche").innerHTML = renderMatrix(
     dms, niches, dmNiche,
@@ -509,15 +579,14 @@ async function loadCroise() {
     dm    => DM_COLORS[dm]
   );
 
-  // Tranche followers x Heure d'envoi
+  // Tranche x Heure
   const th = data.tranches_heures || [];
   if (th.length === 0) {
-    document.getElementById("croise-tranches-heures").innerHTML =
-      '<div class="empty">Pas encore assez de données</div>';
+    document.getElementById("croise-tranches-heures").innerHTML = '<div class="empty">Pas encore assez de données</div>';
   } else {
-    const tranchesOrder = ["< 10K","10K-50K","50K-200K","200K-500K","500K-1M","> 1M"];
-    const heures        = [...new Set(th.map(t => t.heure))].sort((a,b) => a-b);
-    const matrix        = {};
+    const tranchesOrder    = ["< 10K","10K-50K","50K-200K","200K-500K","500K-1M","> 1M"];
+    const heures           = [...new Set(th.map(t => t.heure))].sort((a,b) => a-b);
+    const matrix           = {};
     tranchesOrder.forEach(t => { matrix[t] = {}; });
     th.forEach(item => { if (matrix[item.tranche]) matrix[item.tranche][item.heure] = item; });
     const tranchesPresentes = tranchesOrder.filter(t => th.some(x => x.tranche === t));
@@ -534,10 +603,7 @@ async function loadCroise() {
                   const cell = matrix[tranche]?.[h];
                   if (!cell || cell.total === 0) return `<td style="text-align:center;color:var(--border2);">—</td>`;
                   const bg = cell.taux >= 30 ? 'rgba(76,175,80,0.1)' : cell.taux >= 15 ? 'rgba(245,158,11,0.08)' : '';
-                  return `<td style="text-align:center;background:${bg};">
-                    <span style="color:${taux_color(cell.taux)};font-weight:700;">${cell.taux}%</span>
-                    <div style="font-size:10px;color:var(--text3);">${cell.reponses}/${cell.total}</div>
-                  </td>`;
+                  return `<td style="text-align:center;background:${bg};"><span style="color:${taux_color(cell.taux)};font-weight:700;">${cell.taux}%</span><div style="font-size:10px;color:var(--text3);">${cell.reponses}/${cell.total}</div></td>`;
                 }).join("")}
               </tr>
             `).join("")}
@@ -548,19 +614,17 @@ async function loadCroise() {
     `;
   }
 
-  // Compte IG x Niche
+  // Compte x Niche
   const compteNiche   = data.compte_niche  || [];
   const compteTranche = data.compte_tranche || [];
   const allComptes    = [...new Set([...compteNiche.map(x => x.compte), ...compteTranche.map(x => x.compte)])];
 
   if (compteNiche.length === 0) {
-    document.getElementById("croise-compte-niche").innerHTML =
-      '<div class="empty">Pas encore assez de données</div>';
+    document.getElementById("croise-compte-niche").innerHTML = '<div class="empty">Pas encore assez de données</div>';
   } else {
     const matrixCN = {};
     allComptes.forEach(c => { matrixCN[c] = {}; });
     compteNiche.forEach(item => { if (matrixCN[item.compte]) matrixCN[item.compte][item.niche] = item; });
-
     document.getElementById("croise-compte-niche").innerHTML = renderMatrix(
       allComptes, niches, matrixCN,
       compte => compte,
@@ -569,17 +633,15 @@ async function loadCroise() {
     );
   }
 
-  // Compte IG x Tranche followers
+  // Compte x Tranche
   if (compteTranche.length === 0) {
-    document.getElementById("croise-compte-tranche").innerHTML =
-      '<div class="empty">Pas encore assez de données</div>';
+    document.getElementById("croise-compte-tranche").innerHTML = '<div class="empty">Pas encore assez de données</div>';
   } else {
-    const tranchesOrder  = ["< 10K","10K-50K","50K-200K","200K-500K","500K-1M","> 1M"];
+    const tranchesOrder     = ["< 10K","10K-50K","50K-200K","200K-500K","500K-1M","> 1M"];
     const tranchesPresentes = tranchesOrder.filter(t => compteTranche.some(x => x.tranche === t));
-    const matrixCT = {};
+    const matrixCT          = {};
     allComptes.forEach(c => { matrixCT[c] = {}; });
     compteTranche.forEach(item => { if (!matrixCT[item.compte]) matrixCT[item.compte] = {}; matrixCT[item.compte][item.tranche] = item; });
-
     document.getElementById("croise-compte-tranche").innerHTML = renderMatrix(
       allComptes, tranchesPresentes, matrixCT,
       compte  => compte,
@@ -599,5 +661,5 @@ window.switchPerfTab = function(tab) {
 };
 
 window.initStats = async function() {
-  await Promise.all([loadDM(), loadComptes(), loadNiches(), loadTendances(), loadProfils(), loadTiming(), loadCroise()]);
+  await Promise.all([loadDM(), loadComptes(), loadNiches(), loadTendances(), loadProfils(), loadTiming(), loadSources(), loadCroise()]);
 };
