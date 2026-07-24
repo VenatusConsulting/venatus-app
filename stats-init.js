@@ -339,32 +339,41 @@ async function loadProfils() {
 async function loadTiming() {
   const data = await getStatsTiming();
 
-  // Best hour card
-  const bh = data.meilleure_heure;
-  const hasData = data.heures_envoi.some(v => v > 0);
+  const totalEnvoyes = data.heures_envoi.reduce((a, b) => a + b, 0);
+  const hasData      = totalEnvoyes > 0;
+
+  // Meilleure heure — prend celle avec le plus de DMs envoyés si pas assez de taux
+  let meilleure = data.taux_par_heure.find(h => h.taux > 0 && h.envoyes >= 2);
+  if (!meilleure) {
+    meilleure = data.taux_par_heure.reduce(
+      (best, h) => h.envoyes > best.envoyes ? h : best,
+      { heure: 0, envoyes: 0, reponses: 0, taux: 0 }
+    );
+  }
 
   document.getElementById("timing-best-card").innerHTML = hasData ? `
     <div style="display:flex;align-items:center;gap:16px;">
       <div style="font-size:32px;">⏰</div>
       <div>
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Meilleure heure d'envoi</div>
-        <div style="font-size:28px;font-weight:700;color:var(--purple)">${fmt_heure(bh.heure)}</div>
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">
+          ${meilleure.taux > 0 ? "Meilleure heure d'envoi" : "Heure la plus active"}
+        </div>
+        <div style="font-size:28px;font-weight:700;color:var(--purple)">${fmt_heure(meilleure.heure)}</div>
         <div style="margin-top:8px;display:flex;gap:16px;font-size:13px;">
-          <span style="color:var(--text2)">📨 <strong>${bh.envoyes}</strong> DMs envoyés</span>
-          <span style="color:var(--green)">💬 <strong>${bh.reponses}</strong> réponses</span>
-          <span style="color:var(--yellow)">🔥 <strong>${bh.taux}%</strong> taux</span>
+          <span style="color:var(--text2)">📨 <strong>${meilleure.envoyes}</strong> DMs envoyés</span>
+          <span style="color:var(--green)">💬 <strong>${meilleure.reponses}</strong> réponses</span>
+          ${meilleure.taux > 0
+            ? `<span style="color:var(--yellow)">🔥 <strong>${meilleure.taux}%</strong> taux</span>`
+            : `<span style="color:var(--text3);font-size:12px;">Ajoute des heures de réponse pour voir le taux</span>`
+          }
         </div>
       </div>
     </div>
-  ` : `<div class="empty">Pas encore assez de données — envoie des DMs et marque l'heure de réponse pour voir les insights</div>`;
+  ` : `<div class="empty">Pas encore de données — envoie des DMs pour voir les stats</div>`;
 
-  // Barres heures envoi
-  document.getElementById("timing-envoi").innerHTML = renderHourBars(data.heures_envoi, "var(--purple)");
+  document.getElementById("timing-envoi").innerHTML    = renderHourBars(data.heures_envoi, "var(--purple)");
+  document.getElementById("timing-reponse").innerHTML  = renderHourBars(data.heures_reponse, "var(--green)");
 
-  // Barres heures réponse
-  document.getElementById("timing-reponse").innerHTML = renderHourBars(data.heures_reponse, "var(--green)");
-
-  // Taux par heure
   const maxTaux = Math.max(...data.taux_par_heure.map(h => h.taux), 1);
   document.getElementById("timing-taux").innerHTML = `
     <div class="hour-chart">
@@ -380,23 +389,23 @@ async function loadTiming() {
     </div>
   `;
 
-  // Moyenne relances
   document.getElementById("timing-relances").innerHTML = `
     <div style="text-align:center;padding:20px 0;">
       <div style="font-size:48px;font-weight:700;color:var(--purple)">${data.moy_relances}</div>
       <div style="font-size:13px;color:var(--text3);margin-top:6px;">relances en moyenne avant réponse</div>
       <div style="font-size:12px;color:var(--text3);margin-top:4px;">${data.total_tracked} leads trackés</div>
     </div>
-    ${data.total_tracked === 0 ? '<div class="empty">Les relances seront comptées automatiquement</div>' : ""}
+    ${data.total_tracked === 0 ? '<div class="empty">Les relances seront comptées automatiquement dès qu\'un lead répond</div>' : ""}
   `;
 
-  // Distribution relances
-  const distrib  = data.distrib_relances;
+  const distrib      = data.distrib_relances;
   const distribEntries = Object.entries(distrib);
-  const maxDistrib = Math.max(...distribEntries.map(([,v]) => v), 1);
-  document.getElementById("timing-distrib").innerHTML = distribEntries.map(([label, count]) => `
+  const maxDistrib   = Math.max(...distribEntries.map(([,v]) => v), 1);
+  const labels       = { "0": "Direct", "1": "1 relance", "2": "2 relances", "3": "3 relances", "4+": "4+ relances" };
+
+  document.getElementById("timing-distrib").innerHTML = distribEntries.map(([key, count]) => `
     <div class="dm-bar-row">
-      <div class="dm-bar-label" style="width:60px;flex-shrink:0;">${label === "0" ? "Direct" : label === "1" ? "1 relance" : label === "2" ? "2 relances" : label === "3" ? "3 relances" : "4+ relances"}</div>
+      <div class="dm-bar-label" style="width:80px;flex-shrink:0;">${labels[key] || key}</div>
       <div class="dm-bar-wrap">
         <div class="dm-bar-bg">
           <div class="dm-bar-fill" style="width:${Math.round((count/maxDistrib)*100)}%;background:var(--purple)"></div>
