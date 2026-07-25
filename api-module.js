@@ -35,3 +35,8 @@ export async function addNote(id, note) {
 export async function incrementRelance(id) {
   return fetch(`${API}/leads/${id}/relance`, { method: "POST" }).then(r => r.json());
 }
+export async function getMines(statut = "")    { return fetch(`${API}/mines${statut ? `?statut=${statut}` : ""}`).then(r => r.json()); }
+export async function getMinesStats()          { return fetch(`${API}/mines/stats`).then(r => r.json()); }
+export async function addMine(data)            { return fetch(`${API}/mines`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }).then(r => r.json()); }
+export async function updateMine(id, data)     { return fetch(`${API}/mines/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) }).then(r => r.json()); }
+export async function deleteMine(id)           { return fetch(`${API}/mines/${id}`, { method: "DELETE" }).then(r => r.json()); }
