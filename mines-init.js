@@ -31,13 +31,14 @@ const SOURCES = {
 function extractPseudo(val) {
   if (!val) return "";
   val = val.trim();
-  // Si c'est une URL instagram
+  // Si c'est une URL instagram — extrait juste le pseudo
   if (val.includes("instagram.com/")) {
-    const match = val.match(/instagram\.com\/([^/?#]+)/);
+    const match = val.match(/instagram\.com\/([^/?#\s]+)/);
     if (match) return "@" + match[1].replace(/\/$/, "");
   }
-  // Si ça commence par @
+  // Si ça commence par @ on garde
   if (val.startsWith("@")) return val;
+  // Sinon on ajoute @
   return "@" + val;
 }
 
