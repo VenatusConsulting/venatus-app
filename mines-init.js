@@ -148,19 +148,30 @@ function renderMine(mine) {
       </div>
 
       <!-- Compteur leads -->
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <div class="mine-leads-counter">
-          <button onclick="window._decLead('${mine._id}', ${mine.nb_leads})">−</button>
-          <span class="mine-leads-num">${mine.nb_leads || 0}</span>
-          <button onclick="window._incLead('${mine._id}', ${mine.nb_leads})">+</button>
-          <span style="font-size:11px;color:var(--text3);margin-left:4px;">leads piochés</span>
-        </div>
-        ${mine.nb_leads > 0 ? `
-          <div style="font-size:12px;color:var(--green);">
-            ✅ ${mine.nb_leads} lead${mine.nb_leads > 1 ? "s" : ""} trouvé${mine.nb_leads > 1 ? "s" : ""}
-          </div>
-        ` : ""}
-      </div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+  <div class="mine-leads-counter">
+    <button onclick="window._decLead('${mine._id}', ${mine.nb_leads})">−</button>
+    <input
+      type="number"
+      value="${mine.nb_leads || 0}"
+      min="0"
+      id="leads-input-${mine._id}"
+      style="
+        width:52px;text-align:center;font-size:16px;font-weight:700;
+        color:var(--green);background:transparent;border:none;outline:none;
+        -moz-appearance:textfield;
+      "
+      onchange="window._setLead('${mine._id}', this.value)"
+    >
+    <button onclick="window._incLead('${mine._id}', ${mine.nb_leads})">+</button>
+    <span style="font-size:11px;color:var(--text3);margin-left:4px;">leads piochés</span>
+  </div>
+  ${mine.nb_leads > 0 ? `
+    <div style="font-size:12px;color:var(--green);">
+      ✅ ${mine.nb_leads} lead${mine.nb_leads > 1 ? "s" : ""} trouvé${mine.nb_leads > 1 ? "s" : ""}
+    </div>
+  ` : ""}
+</div>
 
       ${mine.notes ? `<div class="mine-notes">📝 ${mine.notes}</div>` : ""}
     </div>
@@ -185,6 +196,28 @@ window._incLead = async (id, current) => {
 window._decLead = async (id, current) => {
   if ((current || 0) <= 0) return;
   await updateMine(id, { nb_leads: (current || 0) - 1 });
+  loadStats();
+  loadMines();
+};
+
+window._incLead = async (id, current) => {
+  await updateMine(id, { nb_leads: (current || 0) + 1 });
+  loadStats();
+  loadMines();
+};
+
+window._decLead = async (id, current) => {
+  if ((current || 0) <= 0) return;
+  await updateMine(id, { nb_leads: (current || 0) - 1 });
+  loadStats();
+  loadMines();
+};
+
+// ← ajoute ici
+window._setLead = async (id, val) => {
+  const n = parseInt(val);
+  if (isNaN(n) || n < 0) return;
+  await updateMine(id, { nb_leads: n });
   loadStats();
   loadMines();
 };
