@@ -3,7 +3,7 @@ import { getMines, getMinesStats, addMine, updateMine, deleteMine } from "./api-
 const STATUTS_MINE = {
   a_faire:  { label: "🔵 À faire",  color: "#667eea" },
   en_cours: { label: "🟡 En cours", color: "#f59e0b" },
-  epuise:   { label: "⚫ Épuisé",   color: "#555"    },
+  epuise:   { label: "⚫ Épuisé",   color: "#666"    },
 };
 
 const NICHES = {
@@ -13,25 +13,50 @@ const NICHES = {
   cosplay:      "🎨 Cosplay",
 };
 
+const NICHE_COLORS = {
+  influenceuse: "#ec4899",
+  fitness:      "#10b981",
+  gaming:       "#667eea",
+  cosplay:      "#f59e0b",
+};
+
 const SOURCES = {
-  dork:         "🔍 Google Dorking",
+  dork:         "🔍 Dorking",
   abonnements:  "👥 Abonnements",
-  reels:        "🎬 Reels Instagram",
+  reels:        "🎬 Reels",
   tiktok:       "🎵 TikTok",
   manuel:       "✋ Manuel",
 };
 
-let currentMineId = null;
+function extractPseudo(val) {
+  if (!val) return "";
+  val = val.trim();
+  // Si c'est une URL instagram
+  if (val.includes("instagram.com/")) {
+    const match = val.match(/instagram\.com\/([^/?#]+)/);
+    if (match) return "@" + match[1].replace(/\/$/, "");
+  }
+  // Si ça commence par @
+  if (val.startsWith("@")) return val;
+  return "@" + val;
+}
+
+function getInstagramUrl(compte) {
+  const pseudo = compte.replace("@", "");
+  return `https://www.instagram.com/${pseudo}/`;
+}
 
 async function loadStats() {
   const s = await getMinesStats();
   document.getElementById("mines-kpis").innerHTML = [
-    { icon: "⛏️", label: "Total mines",         val: s.total,               color: "" },
-    { icon: "🔵", label: "À faire",              val: s.a_faire,             color: "#667eea" },
-    { icon: "🟡", label: "En cours",             val: s.en_cours,            color: "#f59e0b" },
-    { icon: "⚫", label: "Épuisées",             val: s.epuise,              color: "#555" },
-    { icon: "👤", label: "Leads trouvés total",  val: s.total_leads_trouves, color: "var(--green)" },
-    { icon: "🏆", label: "Meilleure mine",        val: s.best_mine ? `${s.best_mine.compte} (${s.best_mine.nb_leads} leads)` : "—", color: "var(--yellow)" },
+    { icon: "⛏️", label: "Total mines",        val: s.total,               color: "" },
+    { icon: "🔵", label: "À faire",             val: s.a_faire,             color: "#667eea" },
+    { icon: "🟡", label: "En cours",            val: s.en_cours,            color: "#f59e0b" },
+    { icon: "⚫", label: "Épuisées",            val: s.epuise,              color: "#666" },
+    { icon: "👤", label: "Leads trouvés total", val: s.total_leads_trouves, color: "var(--green)" },
+    { icon: "🏆", label: "Meilleure mine",
+      val: s.best_mine ? `${s.best_mine.compte} (${s.best_mine.nb_leads})` : "—",
+      color: "var(--yellow)" },
   ].map(k => `
     <div class="kpi-card">
       <div class="kpi-icon">${k.icon}</div>
@@ -49,148 +74,94 @@ async function loadMines() {
 
   const el = document.getElementById("mines-list");
   if (!data.length) {
-    el.innerHTML = '<div class="empty">Aucune mine — ajoute des comptes IG à explorer !</div>';
+    el.innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--text3);">
+        <div style="font-size:40px;margin-bottom:12px;">⛏️</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px;">Aucune mine</div>
+        <div style="font-size:13px;">Ajoute des comptes Instagram à explorer pour trouver des leads</div>
+      </div>
+    `;
     return;
   }
 
   // Grouper par statut
+  const ordre   = ["en_cours", "a_faire", "epuise"];
   const groupes = { a_faire: [], en_cours: [], epuise: [] };
   data.forEach(m => { if (groupes[m.statut]) groupes[m.statut].push(m); });
 
-  el.innerHTML = Object.entries(groupes).map(([statut, items]) => {
+  el.innerHTML = ordre.map(statut => {
+    const items = groupes[statut];
     if (!items.length) return "";
     const s = STATUTS_MINE[statut];
     return `
-      <div style="margin-bottom:24px;">
-        <div style="font-size:13px;font-weight:700;color:${s.color};margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px;">
-          ${s.label} — ${items.length}
-        </div>
-        ${items.map(mine => renderMine(mine)).join("")}
+      <div class="section-title" style="color:${s.color};">
+        ${s.label}
+        <span class="section-count" style="color:${s.color};">${items.length}</span>
       </div>
+      ${items.map(mine => renderMine(mine)).join("")}
     `;
   }).join("");
 }
 
 function renderMine(mine) {
-  const s = STATUTS_MINE[mine.statut] || STATUTS_MINE.a_faire;
+  const s   = STATUTS_MINE[mine.statut] || STATUTS_MINE.a_faire;
+  const url = getInstagramUrl(mine.compte);
+
   return `
-    <div class="lead-row" style="cursor:default;">
-      <div class="lead-main">
-        <div class="lead-pseudo" style="display:flex;align-items:center;gap:8px;">
-          <a href="https://instagram.com/${mine.compte.replace('@','')}" target="_blank"
-            style="color:var(--text);text-decoration:none;font-weight:700;">
-            ${mine.compte}
-          </a>
-          <span style="font-size:11px;color:${s.color};background:${s.color}22;padding:2px 8px;border-radius:10px;">${s.label}</span>
+    <div class="mine-card" id="mine-${mine._id}">
+      <div class="mine-card-header">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <a href="${url}" target="_blank" class="mine-compte">${mine.compte}</a>
+            <span style="font-size:11px;color:${s.color};background:${s.color}18;border:1px solid ${s.color}44;padding:2px 8px;border-radius:10px;font-weight:600;">
+              ${s.label}
+            </span>
+          </div>
+          <div class="mine-tags">
+            ${mine.niche  ? `<span class="mine-tag" style="color:${NICHE_COLORS[mine.niche]};border-color:${NICHE_COLORS[mine.niche]}44;">${NICHES[mine.niche]}</span>` : ""}
+            ${mine.source ? `<span class="mine-tag">${SOURCES[mine.source] || mine.source}</span>` : ""}
+            <span class="mine-tag" style="color:var(--text3);">📅 ${mine.date_ajout?.split(" ")[0] || "?"}</span>
+          </div>
         </div>
-        <div class="lead-meta">
-          ${mine.niche  ? `<span class="tag">${NICHES[mine.niche] || mine.niche}</span>` : ""}
-          ${mine.source ? `<span class="tag">${SOURCES[mine.source] || mine.source}</span>` : ""}
-          ${mine.nb_leads > 0 ? `<span class="tag" style="color:var(--green)">👤 ${mine.nb_leads} leads trouvés</span>` : ""}
-          ${mine.notes  ? `<span class="tag" style="color:var(--text3)">📝 ${mine.notes.slice(0, 40)}${mine.notes.length > 40 ? "..." : ""}</span>` : ""}
+        <div class="mine-actions">
+          <button onclick="window._deleteMine('${mine._id}', '${mine.compte.replace(/'/g, "\\'")}')"
+            style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:#ef5350;font-size:13px;cursor:pointer;">
+            🗑️
+          </button>
         </div>
       </div>
-      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-        <button onclick="window._editMine('${mine._id}')"
-          style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:var(--text2);font-size:12px;cursor:pointer;">
-          ✏️
-        </button>
-        <button onclick="window._deleteMine('${mine._id}', '${mine.compte.replace(/'/g, "\\'")}')"
-          style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;color:#ef5350;font-size:12px;cursor:pointer;">
-          🗑️
-        </button>
-      </div>
-    </div>
-  `;
-}
 
-async function openEditModal(id) {
-  currentMineId = id;
-  const all  = await getMines();
-  const mine = all.find(m => m._id === id);
-  if (!mine) return;
-
-  document.getElementById("edit-modal-title").textContent = `✏️ ${mine.compte}`;
-  document.getElementById("edit-modal-body").innerHTML = `
-    <div>
-      <label class="detail-label">Statut</label>
-      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+      <!-- Statuts rapides -->
+      <div class="mine-statut-pills">
         ${Object.entries(STATUTS_MINE).map(([key, val]) => `
-          <button data-statut="${key}" class="mine-statut-btn" style="
-            background:${mine.statut === key ? val.color + '22' : 'var(--bg3)'};
-            border:1px solid ${mine.statut === key ? val.color : 'var(--border2)'};
-            border-radius:8px;padding:6px 14px;color:${mine.statut === key ? val.color : 'var(--text2)'};
-            font-size:13px;cursor:pointer;font-weight:${mine.statut === key ? '700' : '400'};
-          ">${val.label}</button>
+          <button class="mine-pill" data-mine="${mine._id}" data-statut="${key}"
+            style="color:${val.color};border-color:${mine.statut === key ? val.color : 'var(--border2)'};background:${mine.statut === key ? val.color + '18' : 'transparent'};">
+            ${val.label}
+          </button>
         `).join("")}
       </div>
-    </div>
-    <div>
-      <label class="detail-label">Leads trouvés dans cette mine</label>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:6px;">
-        <input type="number" id="edit-nb-leads" value="${mine.nb_leads || 0}" min="0"
-          style="width:80px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:6px 10px;color:var(--text);font-size:14px;font-weight:700;text-align:center;outline:none;">
-        <span style="font-size:12px;color:var(--text3)">leads trouvés dans ce compte</span>
+
+      <!-- Compteur leads -->
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div class="mine-leads-counter">
+          <button onclick="window._decLead('${mine._id}', ${mine.nb_leads})">−</button>
+          <span class="mine-leads-num">${mine.nb_leads || 0}</span>
+          <button onclick="window._incLead('${mine._id}', ${mine.nb_leads})">+</button>
+          <span style="font-size:11px;color:var(--text3);margin-left:4px;">leads piochés</span>
+        </div>
+        ${mine.nb_leads > 0 ? `
+          <div style="font-size:12px;color:var(--green);">
+            ✅ ${mine.nb_leads} lead${mine.nb_leads > 1 ? "s" : ""} trouvé${mine.nb_leads > 1 ? "s" : ""}
+          </div>
+        ` : ""}
       </div>
+
+      ${mine.notes ? `<div class="mine-notes">📝 ${mine.notes}</div>` : ""}
     </div>
-    <div>
-      <label class="detail-label">Niche</label>
-      <select id="edit-niche" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;margin-top:4px;">
-        <option value="">— Choisir —</option>
-        ${Object.entries(NICHES).map(([k,v]) => `<option value="${k}" ${mine.niche === k ? "selected" : ""}>${v}</option>`).join("")}
-      </select>
-    </div>
-    <div>
-      <label class="detail-label">Source</label>
-      <select id="edit-source" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;margin-top:4px;">
-        <option value="">— Choisir —</option>
-        ${Object.entries(SOURCES).map(([k,v]) => `<option value="${k}" ${mine.source === k ? "selected" : ""}>${v}</option>`).join("")}
-      </select>
-    </div>
-    <div>
-      <label class="detail-label">Notes</label>
-      <textarea id="edit-notes" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;box-sizing:border-box;resize:vertical;min-height:70px;margin-top:4px;">${mine.notes || ""}</textarea>
-    </div>
-    <button id="btn-save-edit" class="btn-primary">💾 Sauvegarder</button>
   `;
-
-  document.getElementById("edit-modal").classList.remove("hidden");
-
-  // Statut buttons
-  let selectedStatut = mine.statut;
-  document.querySelectorAll(".mine-statut-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      selectedStatut = btn.dataset.statut;
-      document.querySelectorAll(".mine-statut-btn").forEach(b => {
-        const sv = STATUTS_MINE[b.dataset.statut];
-        b.style.background   = "var(--bg3)";
-        b.style.borderColor  = "var(--border2)";
-        b.style.color        = "var(--text2)";
-        b.style.fontWeight   = "400";
-      });
-      const sv = STATUTS_MINE[selectedStatut];
-      btn.style.background  = sv.color + "22";
-      btn.style.borderColor = sv.color;
-      btn.style.color       = sv.color;
-      btn.style.fontWeight  = "700";
-    });
-  });
-
-  document.getElementById("btn-save-edit").addEventListener("click", async () => {
-    await updateMine(currentMineId, {
-      statut:   selectedStatut,
-      nb_leads: parseInt(document.getElementById("edit-nb-leads").value) || 0,
-      niche:    document.getElementById("edit-niche").value || null,
-      source:   document.getElementById("edit-source").value || null,
-      notes:    document.getElementById("edit-notes").value.trim(),
-    });
-    document.getElementById("edit-modal").classList.add("hidden");
-    loadStats();
-    loadMines();
-  });
 }
 
-window._editMine = openEditModal;
+// ── Actions ──────────────────────────────────────────────────────────────────
 
 window._deleteMine = async (id, compte) => {
   if (!confirm(`Supprimer la mine ${compte} ?`)) return;
@@ -199,6 +170,21 @@ window._deleteMine = async (id, compte) => {
   loadMines();
 };
 
+window._incLead = async (id, current) => {
+  await updateMine(id, { nb_leads: (current || 0) + 1 });
+  loadStats();
+  loadMines();
+};
+
+window._decLead = async (id, current) => {
+  if ((current || 0) <= 0) return;
+  await updateMine(id, { nb_leads: (current || 0) - 1 });
+  loadStats();
+  loadMines();
+};
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+
 window.initMines = function() {
   loadStats();
   loadMines();
@@ -206,17 +192,44 @@ window.initMines = function() {
   document.getElementById("filter-statut").addEventListener("change", loadMines);
   document.getElementById("filter-niche").addEventListener("change",  loadMines);
 
+  // Délégation pour les pills de statut
+  document.getElementById("mines-list").addEventListener("click", async (e) => {
+    const btn = e.target.closest(".mine-pill");
+    if (!btn) return;
+    const id     = btn.dataset.mine;
+    const statut = btn.dataset.statut;
+    await updateMine(id, { statut });
+    loadStats();
+    loadMines();
+  });
+
+  // Popup ajout
   document.getElementById("btn-add-mine").addEventListener("click", () => {
-    document.getElementById("add-modal").classList.remove("hidden");
+    document.getElementById("add-popup").classList.remove("hidden");
     document.getElementById("new-compte").focus();
   });
 
+  document.getElementById("btn-cancel-add").addEventListener("click", () => {
+    document.getElementById("add-popup").classList.add("hidden");
+  });
+
+  document.getElementById("add-popup").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("add-popup"))
+      document.getElementById("add-popup").classList.add("hidden");
+  });
+
   document.getElementById("btn-confirm-add").addEventListener("click", async () => {
-    const compte = document.getElementById("new-compte").value.trim();
-    if (!compte) { document.getElementById("new-compte").style.borderColor = "#ef5350"; return; }
+    const raw    = document.getElementById("new-compte").value.trim();
+    const compte = extractPseudo(raw);
+    if (!compte || compte === "@") {
+      document.getElementById("new-compte").style.borderColor = "#ef5350";
+      return;
+    }
+
     const btn = document.getElementById("btn-confirm-add");
     btn.textContent = "...";
     btn.disabled    = true;
+
     try {
       await addMine({
         compte,
@@ -224,7 +237,7 @@ window.initMines = function() {
         source: document.getElementById("new-source").value,
         notes:  document.getElementById("new-notes").value.trim(),
       });
-      document.getElementById("add-modal").classList.add("hidden");
+      document.getElementById("add-popup").classList.add("hidden");
       document.getElementById("new-compte").value = "";
       document.getElementById("new-niche").value  = "";
       document.getElementById("new-source").value = "";
@@ -232,10 +245,17 @@ window.initMines = function() {
       loadStats();
       loadMines();
     } catch(e) {
-      btn.textContent = "❌ Déjà existant";
-      setTimeout(() => { btn.textContent = "✅ Ajouter la mine"; btn.disabled = false; }, 2000);
+      btn.textContent   = "⚠️ Déjà existante";
+      btn.style.background = "#ef535033";
+      setTimeout(() => {
+        btn.textContent      = "⛏️ Ajouter la mine";
+        btn.style.background = "";
+        btn.disabled         = false;
+      }, 2000);
+      return;
     }
-    btn.textContent = "✅ Ajouter la mine";
+
+    btn.textContent = "⛏️ Ajouter la mine";
     btn.disabled    = false;
   });
 };
