@@ -559,6 +559,7 @@ async function loadCroise() {
             <span style="color:${NICHE_COLORS[item.niche]}">${NICHE_LABELS[item.niche]}</span>
             <span style="color:var(--text3);font-weight:400;"> · </span>
             <span style="color:${DM_COLORS[item.dm]}">${DM_TEMPLATES_TEXT[item.dm]?.label}</span>
+            ${item.best_compte ? `<span style="color:var(--text3);font-weight:400;"> · </span><span style="color:var(--purple)">📱 ${item.best_compte}</span>` : ""}
           </div>
           <div style="font-size:11px;color:var(--text3);">
             📨 ${item.total} envois · 💬 ${item.reponses} réponses
