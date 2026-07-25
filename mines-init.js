@@ -43,10 +43,11 @@ function extractPseudo(val) {
 }
 
 function getInstagramUrl(compte) {
-  // Si le compte contient déjà une URL complète (anciens leads mal formattés)
-  if (compte.includes("instagram.com")) {
-    return compte.startsWith("http") ? compte : "https://" + compte;
+  // Si déjà une URL complète
+  if (compte.startsWith("http://") || compte.startsWith("https://")) {
+    return compte;
   }
+  // Sinon construire depuis le pseudo
   const pseudo = compte.replace("@", "").replace(/\/$/, "");
   return `https://www.instagram.com/${pseudo}/`;
 }
