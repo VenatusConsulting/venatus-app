@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Venatus — Mines</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-logo">💎 Venatus</div>
+    <nav class="sidebar-nav">
+      <a href="index.html"    class="sidebar-link"><span>📊</span> Dashboard</a>
+      <a href="leads.html"    class="sidebar-link"><span>👤</span> Leads</a>
+      <a href="relances.html" class="sidebar-link"><span>⏰</span> Relances</a>
+      <a href="pipeline.html" class="sidebar-link"><span>📋</span> Pipeline</a>
+      <a href="mines.html"    class="sidebar-link active"><span>⛏️</span> Mines</a>
+      <a href="stats.html"    class="sidebar-link"><span>📈</span> Stats Perf</a>
+    </nav>
+  </aside>
+
+  <div class="main-wrap">
+    <div class="main-content">
+      <div class="page-header">
+        <h1>⛏️ Mines IG</h1>
+        <button id="btn-add-mine" class="btn-primary">➕ Ajouter une mine</button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid" id="mines-kpis"></div>
+
+      <!-- Filtres -->
+      <div class="filters-bar">
+        <select id="filter-statut">
+          <option value="tous">Tous les statuts</option>
+          <option value="a_faire">🔵 À faire</option>
+          <option value="en_cours">🟡 En cours</option>
+          <option value="epuise">⚫ Épuisé</option>
+        </select>
+        <select id="filter-niche">
+          <option value="">Toutes les niches</option>
+          <option value="influenceuse">💋 Influenceuse</option>
+          <option value="fitness">💪 Fitness</option>
+          <option value="gaming">🎮 Gaming</option>
+          <option value="cosplay">🎨 Cosplay</option>
+        </select>
+      </div>
+
+      <!-- Liste -->
+      <div id="mines-list"></div>
+
+    </div>
+  </div>
+
+  <!-- Modal ajout -->
+  <div id="add-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>➕ Nouvelle mine</h2>
+        <button onclick="document.getElementById('add-modal').classList.add('hidden')" class="modal-close">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding:20px;">
+        <div>
+          <label class="detail-label">Compte Instagram *</label>
+          <input type="text" id="new-compte" placeholder="@compte_instagram"
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;box-sizing:border-box;margin-top:4px;">
+        </div>
+        <div>
+          <label class="detail-label">Niche</label>
+          <select id="new-niche" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;margin-top:4px;">
+            <option value="">— Choisir —</option>
+            <option value="influenceuse">💋 Influenceuse</option>
+            <option value="fitness">💪 Fitness</option>
+            <option value="gaming">🎮 Gaming</option>
+            <option value="cosplay">🎨 Cosplay</option>
+          </select>
+        </div>
+        <div>
+          <label class="detail-label">Source</label>
+          <select id="new-source" style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;margin-top:4px;">
+            <option value="">— Choisir —</option>
+            <option value="dork">🔍 Google Dorking</option>
+            <option value="abonnements">👥 Abonnements d'une modèle</option>
+            <option value="reels">🎬 Reels Instagram</option>
+            <option value="tiktok">🎵 TikTok</option>
+            <option value="manuel">✋ Manuel</option>
+          </select>
+        </div>
+        <div>
+          <label class="detail-label">Notes</label>
+          <textarea id="new-notes" placeholder="Niche dominante, qualité estimée..."
+            style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none;box-sizing:border-box;resize:vertical;min-height:70px;margin-top:4px;"></textarea>
+        </div>
+        <button id="btn-confirm-add" class="btn-primary" style="margin-top:4px;">✅ Ajouter la mine</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal édition -->
+  <div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="edit-modal-title">✏️ Éditer la mine</h2>
+        <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="modal-close">✕</button>
+      </div>
+      <div id="edit-modal-body" style="padding:20px;display:flex;flex-direction:column;gap:12px;">
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { checkAuth, addSignOutButton } from "./firebase-auth.js";
+    import "./mines-init.js";
+    checkAuth(() => {
+      addSignOutButton();
+      window.initMines();
+    });
+  </script>
+</body>
+</html>
