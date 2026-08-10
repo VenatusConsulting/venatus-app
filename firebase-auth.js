@@ -12,7 +12,7 @@ const firebaseConfig = {
 const ALLOWED_EMAIL = "contact@venatus-consulting.com"; // 
 
 const app      = initializeApp(firebaseConfig);
-const auth     = getAuth(app);
+export const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 export function checkAuth(onSuccess) {
