@@ -196,6 +196,10 @@ function showDMPopup(pseudo, onConfirm) {
         <div id="dm-preview-text" style="font-size:15px;color:#e0e0ff;font-weight:500;"></div>
         <button id="copy-dm-btn" style="margin-top:10px;background:rgba(102,126,234,0.15);border:1px solid rgba(102,126,234,0.4);border-radius:6px;padding:6px 14px;color:#667eea;font-size:12px;font-weight:600;cursor:pointer;">📋 Copier</button>
       </div>
+      <div id="dm-perso-wrap" style="display:none;margin-bottom:16px;">
+        <div style="font-size:11px;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">✍️ Ton message</div>
+        <textarea id="dm-perso-input" placeholder="Écris le DM que tu as envoyé..." style="width:100%;min-height:70px;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;padding:10px 12px;color:#e0e0ff;font-size:13px;outline:none;box-sizing:border-box;resize:vertical;font-family:inherit;"></textarea>
+      </div>
       <div style="display:flex;gap:8px;">
         <button id="popup-cancel" style="flex:1;background:#0f0f1e;border:1px solid #2a2a45;border-radius:8px;padding:11px;color:#555;font-size:13px;cursor:pointer;">Annuler</button>
         <button id="popup-confirm" style="flex:2;background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:8px;padding:11px;color:white;font-size:13px;font-weight:700;cursor:pointer;opacity:0.4;pointer-events:none;" disabled>✅ Confirmer contacté</button>
@@ -204,22 +208,31 @@ function showDMPopup(pseudo, onConfirm) {
   `;
   document.body.appendChild(popup);
   let selectedDM = null;
+
+  function updateConfirmState() {
+    const confirm = document.getElementById("popup-confirm");
+    const persoText = document.getElementById("dm-perso-input").value.trim();
+    const ok = selectedDM && (selectedDM !== "perso" || persoText);
+    confirm.disabled = !ok;
+    confirm.style.opacity = ok ? "1" : "0.4";
+    confirm.style.pointerEvents = ok ? "auto" : "none";
+  }
+
   popup.querySelectorAll(".popup-dm-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       popup.querySelectorAll(".popup-dm-btn").forEach(b => { b.style.borderColor = "#2a2a45"; b.style.background = "#0f0f1e"; });
       btn.style.borderColor = DM_TEMPLATES[btn.dataset.dm].color;
       btn.style.background  = `${DM_TEMPLATES[btn.dataset.dm].color}18`;
       selectedDM = btn.dataset.dm;
-      if (DM_TEMPLATES[selectedDM].text) {
-        document.getElementById("dm-preview").style.display = "block";
+      document.getElementById("dm-preview").style.display    = selectedDM !== "perso" ? "block" : "none";
+      document.getElementById("dm-perso-wrap").style.display = selectedDM === "perso" ? "block" : "none";
+      if (selectedDM !== "perso") {
         document.getElementById("dm-preview-text").textContent = DM_TEMPLATES[selectedDM].text;
-      } else {
-        document.getElementById("dm-preview").style.display = "none";
       }
-      const confirm = document.getElementById("popup-confirm");
-      confirm.disabled = false; confirm.style.opacity = "1"; confirm.style.pointerEvents = "auto";
+      updateConfirmState();
     });
   });
+  document.getElementById("dm-perso-input").addEventListener("input", updateConfirmState);
   document.getElementById("copy-dm-btn")?.addEventListener("click", () => {
     if (!selectedDM) return;
     navigator.clipboard.writeText(DM_TEMPLATES[selectedDM].text).then(() => {
@@ -230,8 +243,9 @@ function showDMPopup(pseudo, onConfirm) {
   document.getElementById("popup-cancel").addEventListener("click", removePopup);
   document.getElementById("popup-confirm").addEventListener("click", () => {
     if (!selectedDM) return;
+    const persoText = selectedDM === "perso" ? document.getElementById("dm-perso-input").value.trim() : null;
     removePopup();
-    onConfirm(selectedDM);
+    onConfirm(selectedDM, persoText);
   });
 }
 
@@ -374,8 +388,9 @@ async function openLead(id) {
       const statut = btn.dataset.statut;
       if (statut === "contacte") {
         showComptePopup((compte) => {
-          showDMPopup(currentId, async (dm) => {
+          showDMPopup(currentId, async (dm, persoText) => {
             await updateLead(currentId, { statut, compte_ig: compte, dm_utilise: dm });
+            if (persoText) await addNote(currentId, `DM envoyé : ${persoText}`);
             window.closeModal();
             loadLeads();
           });
