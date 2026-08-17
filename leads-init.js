@@ -25,10 +25,11 @@ const SOURCES = {
 };
 
 const DM_TEMPLATES = {
-  dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗",               color: "#667eea" },
-  dm2: { label: "DM 2 — Girl energy",          text: "idk why but you just have THAT girl energy 💅✨", color: "#f59e0b" },
-  dm3: { label: "DM 3 — Feed + question",      text: "I love your feed 😍 how long have you been posting?", color: "#10b981" },
-  dm4: { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀",         color: "#ec4899" },
+  dm1:   { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗",               color: "#667eea" },
+  dm2:   { label: "DM 2 — Girl energy",          text: "idk why but you just have THAT girl energy 💅✨", color: "#f59e0b" },
+  dm3:   { label: "DM 3 — Feed + question",      text: "I love your feed 😍 how long have you been posting?", color: "#10b981" },
+  dm4:   { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀",         color: "#ec4899" },
+  perso: { label: "✍️ DM perso",                 text: "",                                              color: "#888"    },
 };
 
 const COMPTES_IG = ["@Popsy.Mel", "@Ceo.Maxime"];
@@ -186,7 +187,7 @@ function showDMPopup(pseudo, onConfirm) {
         ${Object.entries(DM_TEMPLATES).map(([key, dm]) => `
           <button data-dm="${key}" class="popup-dm-btn" style="background:#0f0f1e;border:1px solid #2a2a45;border-radius:10px;padding:12px 16px;color:#e0e0ff;font-size:13px;cursor:pointer;text-align:left;">
             <div style="font-weight:600;color:${dm.color};margin-bottom:4px;">${dm.label}</div>
-            <div style="font-size:12px;color:#555;font-style:italic;">"${dm.text}"</div>
+            ${dm.text ? `<div style="font-size:12px;color:#555;font-style:italic;">"${dm.text}"</div>` : ""}
           </button>
         `).join("")}
       </div>
@@ -209,8 +210,12 @@ function showDMPopup(pseudo, onConfirm) {
       btn.style.borderColor = DM_TEMPLATES[btn.dataset.dm].color;
       btn.style.background  = `${DM_TEMPLATES[btn.dataset.dm].color}18`;
       selectedDM = btn.dataset.dm;
-      document.getElementById("dm-preview").style.display = "block";
-      document.getElementById("dm-preview-text").textContent = DM_TEMPLATES[selectedDM].text;
+      if (DM_TEMPLATES[selectedDM].text) {
+        document.getElementById("dm-preview").style.display = "block";
+        document.getElementById("dm-preview-text").textContent = DM_TEMPLATES[selectedDM].text;
+      } else {
+        document.getElementById("dm-preview").style.display = "none";
+      }
       const confirm = document.getElementById("popup-confirm");
       confirm.disabled = false; confirm.style.opacity = "1"; confirm.style.pointerEvents = "auto";
     });
