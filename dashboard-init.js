@@ -1,4 +1,4 @@
-import { getStats, getGoal, getRelances, getLead, updateLead, addNote } from "./api-module.js";
+import { getStats, getGoal, getRelances, getLead, updateLead, addNote, getComptes } from "./api-module.js";
 
 const STATUTS = {
   nouveau:       { label: "🆕 Nouveau",       color: "#667eea" },
@@ -160,10 +160,13 @@ window.closeModal = () => {
 };
 
 window.initDashboard = async function() {
-  const [stats, goalData, relancesData] = await Promise.all([getStats(), getGoal(), getRelances()]);
+  const [stats, goalData, relancesData, comptesData] = await Promise.all([getStats(), getGoal(), getRelances(), getComptes()]);
 
-  const goal        = goalData.goal || 210;
-  const goalParJour = Math.ceil(goal / 7);
+  const nbComptes      = (comptesData.comptes || []).length || 1;
+  const goalParCompte  = goalData.goal || 210;
+  const goal           = goalParCompte * nbComptes;
+  const parCompteParJour = Math.ceil(goalParCompte / 7);
+  const goalParJour    = parCompteParJour * nbComptes;
   const dms         = stats.dms_today;
   const reste       = Math.max(goalParJour - dms, 0);
   const pctJour     = Math.min(Math.round((dms / goalParJour) * 100), 100);
@@ -179,7 +182,7 @@ window.initDashboard = async function() {
       <div class="objectif-top">
         <div>
           <div class="objectif-title">🎯 Objectif du jour</div>
-          <div class="objectif-sub">${goalParJour} DMs/jour pour atteindre ${goal}/semaine</div>
+          <div class="objectif-sub">${parCompteParJour} DMs/jour × ${nbComptes} compte${nbComptes > 1 ? "s" : ""} = ${goalParJour} DMs/jour pour atteindre ${goal}/semaine</div>
         </div>
         <div class="objectif-counter ${dms >= goalParJour ? 'done' : ''}">${dms}/${goalParJour}</div>
       </div>
