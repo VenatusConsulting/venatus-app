@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Venatus — Pipeline</title>
+  <title>Venatus — Par compte</title>
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -29,32 +29,23 @@
   <div class="main-wrap">
     <div class="main-content">
       <div class="page-header">
-        <h1>Pipeline</h1>
-        <span class="badge" id="pipeline-total">—</span>
+        <h1>Par compte</h1>
       </div>
-      <div class="kanban" id="kanban">
-        <div class="loading">Chargement...</div>
+      <div class="card">
+        <div class="card-header"><h2>Leads par compte Instagram</h2></div>
+        <div class="niche-grid" id="comptes-grid">
+          <div class="loading">Chargement...</div>
+        </div>
       </div>
-    </div>
-  </div>
-
-  <div id="modal" class="modal hidden">
-    <div class="modal-backdrop" onclick="closeModal()"></div>
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="modal-pseudo">—</h2>
-        <button onclick="closeModal()" class="modal-close">✕</button>
-      </div>
-      <div class="modal-body" id="modal-body"></div>
     </div>
   </div>
 
   <script type="module">
     import { checkAuth, addSignOutButton } from "./firebase-auth.js";
-    import "./pipeline-init.js";
+    import "./comptes-init.js";
     checkAuth(() => {
       addSignOutButton();
-      window.initPipeline();
+      window.initComptes();
     });
   </script>
 </body>

@@ -20,6 +20,7 @@ export async function getStatsProfils()     { return authFetch(`/stats/profils`)
 export async function getStatsTiming()      { return authFetch(`/stats/timing`).then(r => r.json()); }
 export async function getStatsSources()     { return authFetch(`/stats/sources`).then(r => r.json()); }
 export async function getStatsCroise()      { return authFetch(`/stats/croise`).then(r => r.json()); }
+export async function getComptes()          { return authFetch(`/comptes`).then(r => r.json()); }
 
 export async function getLeads(params = {}) {
   return authFetch(`/leads?${new URLSearchParams(params)}`).then(r => r.json());

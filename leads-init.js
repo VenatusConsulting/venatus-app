@@ -1,4 +1,4 @@
-import { getLeads, getLead, updateLead, addNote, incrementRelance } from "./api-module.js";
+import { getLeads, getLead, updateLead, addNote, incrementRelance, getComptes } from "./api-module.js";
 
 const STATUTS = {
   nouveau:       { label: "🆕 Nouveau",       color: "#667eea" },
@@ -54,12 +54,24 @@ function extractHeure(dateStr) {
 
 function getFilters() {
   return {
-    statut: document.getElementById("filter-statut").value,
-    niche:  document.getElementById("filter-niche").value,
-    search: document.getElementById("search").value.trim(),
-    limit:  LIMIT,
-    skip:   page * LIMIT,
+    statut:    document.getElementById("filter-statut").value,
+    niche:     document.getElementById("filter-niche").value,
+    compte_ig: document.getElementById("filter-compte").value,
+    search:    document.getElementById("search").value.trim(),
+    limit:     LIMIT,
+    skip:      page * LIMIT,
   };
+}
+
+async function loadComptesFilter() {
+  const data   = await getComptes();
+  const select = document.getElementById("filter-compte");
+  for (const compte of data.comptes || []) {
+    const opt = document.createElement("option");
+    opt.value = compte;
+    opt.textContent = compte;
+    select.appendChild(opt);
+  }
 }
 
 async function loadLeads() {
@@ -393,16 +405,19 @@ window.closeModal = () => {
   currentId = null;
 };
 
-window.initLeads = function() {
+window.initLeads = async function() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get("statut")) document.getElementById("filter-statut").value = params.get("statut");
-  if (params.get("niche"))  document.getElementById("filter-niche").value  = params.get("niche");
+  if (params.get("statut"))    document.getElementById("filter-statut").value = params.get("statut");
+  if (params.get("niche"))     document.getElementById("filter-niche").value  = params.get("niche");
+  await loadComptesFilter();
+  if (params.get("compte_ig")) document.getElementById("filter-compte").value = params.get("compte_ig");
   document.getElementById("search").addEventListener("input", () => {
     clearTimeout(debounce);
     debounce = setTimeout(() => { page = 0; loadLeads(); }, 400);
   });
   document.getElementById("filter-statut").addEventListener("change", () => { page = 0; loadLeads(); });
   document.getElementById("filter-niche").addEventListener("change",  () => { page = 0; loadLeads(); });
+  document.getElementById("filter-compte").addEventListener("change", () => { page = 0; loadLeads(); });
   document.getElementById("prev-btn").addEventListener("click", () => { page--; loadLeads(); });
   document.getElementById("next-btn").addEventListener("click", () => { page++; loadLeads(); });
   loadLeads();
