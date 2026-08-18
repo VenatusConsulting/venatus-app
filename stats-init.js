@@ -1,14 +1,16 @@
 import { getStatsDM, getStatsComptes, getStatsNiches, getStatsTendances, getStatsProfils, getStatsTiming, getStatsSources, getStatsCroise } from "./api-module.js";
 
 const DM_TEMPLATES_TEXT = {
-  dm1: { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗" },
-  dm2: { label: "DM 2 — Girl energy",          text: "idk why but you just have THAT girl energy 💅✨" },
-  dm3: { label: "DM 3 — Feed + question",      text: "I love your feed 😍 how long have you been posting?" },
-  dm4: { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀" },
+  dm1:   { label: "DM 1 — Compliment physique", text: "omgg you are so pretty girl! 💗" },
+  dm2:   { label: "DM 2 — Girl energy",          text: "idk why but you just have THAT girl energy 💅✨" },
+  dm3:   { label: "DM 3 — Feed + question",      text: "I love your feed 😍 how long have you been posting?" },
+  dm4:   { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀" },
+  dm5:   { label: "DM 5 — Body tea",             text: "omggg body teaaa 🤏💗" },
+  perso: { label: "✍️ DM perso",                 text: "message personnalisé (texte variable)" },
 };
 
-const DM_COLORS     = { dm1: "#667eea", dm2: "#f59e0b", dm3: "#10b981", dm4: "#ec4899" };
-const DM_LABELS     = { dm1: "DM 1", dm2: "DM 2", dm3: "DM 3", dm4: "DM 4" };
+const DM_COLORS     = { dm1: "#667eea", dm2: "#f59e0b", dm3: "#10b981", dm4: "#ec4899", dm5: "#06b6d4", perso: "#888" };
+const DM_LABELS     = { dm1: "DM 1", dm2: "DM 2", dm3: "DM 3", dm4: "DM 4", dm5: "DM 5", perso: "Perso" };
 const NICHE_LABELS  = { influenceuse: "💋 Influenceuse", fitness: "💪 Fitness", gaming: "🎮 Gaming", cosplay: "🎨 Cosplay" };
 const NICHE_COLORS  = { influenceuse: "#ec4899", fitness: "#10b981", gaming: "#667eea", cosplay: "#f59e0b" };
 const COMPTE_COLORS = ["#667eea","#f59e0b","#10b981","#ec4899","#29b6f6","#8b5cf6"];
@@ -127,8 +129,8 @@ async function loadDM() {
       <div style="font-size:32px;">🏆</div>
       <div>
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Meilleur DM</div>
-        <div style="font-size:18px;font-weight:700;color:${DM_COLORS[key]}">${DM_TEMPLATES_TEXT[key].label}</div>
-        <div style="font-size:13px;color:var(--text2);margin-top:4px;font-style:italic;">"${DM_TEMPLATES_TEXT[key].text}"</div>
+        <div style="font-size:18px;font-weight:700;color:${DM_COLORS[key] || '#888'}">${DM_TEMPLATES_TEXT[key]?.label || key}</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:4px;font-style:italic;">"${DM_TEMPLATES_TEXT[key]?.text || ""}"</div>
         <div style="margin-top:8px;display:flex;gap:16px;font-size:13px;">
           <span style="color:var(--text2)">📨 <strong>${b.total}</strong> envoyés</span>
           <span style="color:var(--green)">💬 <strong>${b.reponses}</strong> réponses</span>
@@ -543,7 +545,7 @@ async function loadSources() {
 async function loadCroise() {
   const data  = await getStatsCroise();
   const niches = ["influenceuse","fitness","gaming","cosplay"];
-  const dms    = ["dm1","dm2","dm3","dm4"];
+  const dms    = ["dm1","dm2","dm3","dm4","dm5","perso"];
 
   const ideal = data.profil_ideal || [];
   document.getElementById("croise-ideal").innerHTML = ideal.length ? `
