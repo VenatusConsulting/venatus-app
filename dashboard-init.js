@@ -160,7 +160,18 @@ window.closeModal = () => {
 };
 
 window.initDashboard = async function() {
-  const [stats, goalData, relancesData, comptesData] = await Promise.all([getStats(), getGoal(), getRelances(), getComptes()]);
+  let stats, goalData, relancesData, comptesData;
+  try {
+    [stats, goalData, relancesData, comptesData] = await Promise.all([getStats(), getGoal(), getRelances(), getComptes()]);
+  } catch (e) {
+    document.getElementById("objectif-day").innerHTML = `
+      <div class="empty">
+        ⚠️ Impossible de charger — l'API est peut-être en train de se réveiller (Render gratuit)
+        <br><button onclick="window.initDashboard()" class="btn-primary" style="margin-top:10px;">Réessayer</button>
+      </div>
+    `;
+    return;
+  }
 
   const nbComptes      = (comptesData.comptes || []).length || 1;
   const goalParCompte  = goalData.goal || 210;

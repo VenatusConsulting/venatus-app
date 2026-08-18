@@ -64,15 +64,18 @@ function getFilters() {
   };
 }
 
-async function loadComptesFilter() {
-  const data   = await getComptes();
-  const select = document.getElementById("filter-compte");
-  for (const compte of data.comptes || []) {
-    const opt = document.createElement("option");
-    opt.value = compte;
-    opt.textContent = compte;
-    select.appendChild(opt);
-  }
+async function loadComptesFilter(preselected) {
+  try {
+    const data   = await getComptes();
+    const select = document.getElementById("filter-compte");
+    for (const compte of data.comptes || []) {
+      if (compte === preselected) continue; // déjà inséré en synchrone au chargement
+      const opt = document.createElement("option");
+      opt.value = compte;
+      opt.textContent = compte;
+      select.appendChild(opt);
+    }
+  } catch (e) { /* filtre facultatif, ne doit jamais bloquer la page */ }
 }
 
 async function loadLeads() {
@@ -425,12 +428,20 @@ window.closeModal = () => {
   currentId = null;
 };
 
-window.initLeads = async function() {
+window.initLeads = function() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get("statut"))    document.getElementById("filter-statut").value = params.get("statut");
-  if (params.get("niche"))     document.getElementById("filter-niche").value  = params.get("niche");
-  await loadComptesFilter();
-  if (params.get("compte_ig")) document.getElementById("filter-compte").value = params.get("compte_ig");
+  if (params.get("statut")) document.getElementById("filter-statut").value = params.get("statut");
+  if (params.get("niche"))  document.getElementById("filter-niche").value  = params.get("niche");
+  const compteParam = params.get("compte_ig");
+  if (compteParam) {
+    const select = document.getElementById("filter-compte");
+    const opt = document.createElement("option");
+    opt.value = compteParam;
+    opt.textContent = compteParam;
+    select.appendChild(opt);
+    select.value = compteParam;
+  }
+  loadComptesFilter(compteParam);
   document.getElementById("search").addEventListener("input", () => {
     clearTimeout(debounce);
     debounce = setTimeout(() => { page = 0; loadLeads(); }, 400);
