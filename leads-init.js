@@ -29,6 +29,7 @@ const DM_TEMPLATES = {
   dm2:   { label: "DM 2 — Girl energy",          text: "idk why but you just have THAT girl energy 💅✨", color: "#f59e0b" },
   dm3:   { label: "DM 3 — Feed + question",      text: "I love your feed 😍 how long have you been posting?", color: "#10b981" },
   dm4:   { label: "DM 4 — Underrated",           text: "ok but why are you so underrated?? 👀",         color: "#ec4899" },
+  dm5:   { label: "DM 5 — Body tea",             text: "omggg body teaaa 🤏💗",                          color: "#06b6d4" },
   perso: { label: "✍️ DM perso",                 text: "",                                              color: "#888"    },
 };
 
